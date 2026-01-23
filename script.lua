@@ -8,6 +8,7 @@ local uis = game:GetService("UserInputService")
 -- Player Variables
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Humanoid = Character:FindFirstChild("Humanoid")
 local Animator = Humanoid:WaitForChild("Animator")
 
@@ -105,8 +106,42 @@ local kjTrack
 local kjAnim = Instance.new("Animation")
 kjAnim.AnimationId = "rbxassetid://77727115892579"
 
+local vKConns = {}
+local vKProceed = true
+local oldPos
+
+
 local cVConns = {}
 -- FUNCTIONS
+
+local function vKCode()
+	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
+		if c.Name == "ForceField" then
+			local hf = Character:FindFirstChild("HunterFists")
+
+			if hf == nil then return end		
+
+			task.spawn(function()
+				task.wait(1.4)
+				oldPos = HumanoidRootPart.CFrame
+
+				if not vKProceed then return end
+
+				HumanoidRootPart.CFrame = CFrame.new(0, -490, 0)
+				task.wait(.2)
+				HumanoidRootPart.CFrame = oldPos
+			end)
+		elseif c.Name == "Effects" then
+			vKProceed = false
+		end
+	end)
+
+	vKConns[#vKConns+1] = Character.ChildRemoved:Connect(function(c)
+		if c.Name == "Effects" then
+			vKProceed = true
+		end
+	end)
+end
 
 local function createSounds()
 	for _, s in pairs(sounds) do
@@ -271,6 +306,20 @@ createModButton("M1 Reset", "Combat", true, function(isEnabled)
 	end
 end)
 
+-- Void Kill
+createModButton("Void Kill", "Combat", true, function(isEnabled)
+	if isEnabled then
+		vKCode()
+	elseif vKConns then
+		for _, conn in pairs(vKConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+		vKConns = {}
+	end
+end)
+
 -- Force AutoRotate
 local forceAutoRotateConnection
 createModButton("Force AutoRotate", "Player", true, function(isEnabled)
@@ -335,7 +384,7 @@ createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 				conn:Disconnect()
 			end
 		end
-		
+
 		cVConns = {}
 	end
 end)
@@ -382,6 +431,7 @@ end)
 Player.CharacterAdded:Connect(function(char)
 	Character = char
 	Humanoid = char:WaitForChild("Humanoid")
+	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 
 	-- Reloads the previous ' ON ' options
 	if forceAutoRotateConnection then -- it means it is on
@@ -390,6 +440,18 @@ Player.CharacterAdded:Connect(function(char)
 				Humanoid.AutoRotate = true
 			end
 		end)
+	end
+
+	if vKConns then
+		for _, conn in pairs(vKConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+
+		vKConns = {}
+
+		vKCode()
 	end
 
 	kjSetup(char)
