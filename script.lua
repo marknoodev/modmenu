@@ -119,47 +119,66 @@ local movesTbl = { -- false = ready
 	["4"] = false
 }
 
+local movesConnector = {}
 local canStartVK = false
 
-local moves = Player.PlayerGui.Hotbar.Backpack.Hotbar
+local vKEnabled = false
+
 -- FUNCTIONS
+local function cleanupConnections()
+	for _, connection in ipairs(movesConnector) do
+		connection:Disconnect()
+	end
+	movesConnector = {}
+end
 
-for _, button in pairs(moves:GetDescendants()) do
-	if button:IsA("TextButton") then
+local function setupMoves()
+	cleanupConnections()
 
-		if movesTbl[button.Name] ~= nil then
+	local moves = Player.PlayerGui.Hotbar.Backpack.Hotbar
 
-			button.DescendantAdded:Connect(function(desc)
-				if desc.Name == "Cooldown" then
-					movesTbl[button.Name] = true
-					print(button.Name .. " is on cooldown")
-				end
-				
-				if button.Name == "1" and movesTbl["1"] == true then
-					task.spawn(function() -- only flowing water can void kill
-						canStartVK = true
-						task.wait(2)
-						canStartVK = false
-					end)
-				end
-			end)
+	for _, button in pairs(moves:GetDescendants()) do
+		if button:IsA("TextButton") then
+			if movesTbl[button.Name] ~= nil then
+				movesConnector[#movesConnector+1] = button.DescendantAdded:Connect(function(desc)
+					if desc.Name == "Cooldown" then
+						movesTbl[button.Name] = true
+						print(button.Name .. " is on cooldown")
 
-			button.DescendantRemoving:Connect(function(desc)
-				if desc.Name == "Cooldown" then
-					movesTbl[button.Name] = false
-					print(button.Name .. " is ready")
-				end
-			end)
+						if button.Name == "1" and movesTbl["1"] == true then
+							task.spawn(function() -- only flowing water can void kill
+								canStartVK = true
+								task.wait(2)
+								canStartVK = false
+							end)
+						end
+					end
+				end)
 
+				movesConnector[#movesConnector+1] = button.DescendantRemoving:Connect(function(desc)
+					if desc.Name == "Cooldown" then
+						movesTbl[button.Name] = false
+						print(button.Name .. " is ready")
+					end
+				end)
+			end
 		end
 	end
 end
 
+-- when starting
+if Player.Character then
+	setupMoves()
+end
+
 local function vKCode()
+	if not vKEnabled then return end
+	
 	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
 		if c.Name == "ForceField" then
+
 			if not canStartVK then return end			
-			
+
 			local hf = Character:FindFirstChild("HunterFists")
 
 			if hf == nil then return end		
@@ -352,8 +371,10 @@ end)
 -- Void Kill
 createModButton("Void Kill", "Combat", true, function(isEnabled)
 	if isEnabled then
+		vKEnabled = true
 		vKCode()
 	elseif vKConns then
+		vKEnabled = false
 		for _, conn in pairs(vKConns) do
 			if conn then
 				conn:Disconnect()
@@ -472,6 +493,8 @@ createModButton("KJ Flexworks Anim", "Miscellaneous", false, function()
 end)
 
 Player.CharacterAdded:Connect(function(char)
+	task.wait(.1)
+
 	Character = char
 	Humanoid = char:WaitForChild("Humanoid")
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
@@ -486,8 +509,17 @@ Player.CharacterAdded:Connect(function(char)
 	end
 
 	if vKConns then
+		for _, conn in pairs(vKConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+
+		vKConns = {}
 		vKCode()
 	end
+
+	setupMoves()
 
 	kjSetup(char)
 end)
