@@ -119,17 +119,17 @@ local function createSounds()
 
 	local kjphysic = Instance.new("Sound")
 	kjphysic.SoundId = "rbxassetid://99126314241685"
-	kjphysic.Volume = 2
+	kjphysic.Volume = 2.5
 	kjphysic.Parent = workspace
 
 	local kjvoice = Instance.new("Sound")
 	kjvoice.SoundId = "rbxassetid://128136381213631"
-	kjvoice.Volume = 2
+	kjvoice.Volume = 2.5
 	kjvoice.Parent = workspace
 
 	local kjmusic = Instance.new("Sound")
 	kjmusic.SoundId = "rbxassetid://95410275491981"
-	kjmusic.Volume = 2
+	kjmusic.Volume = 2.5
 	kjmusic.Parent = workspace
 
 	table.insert(sounds, kjphysic)
