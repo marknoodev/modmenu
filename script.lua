@@ -110,13 +110,56 @@ local vKConns = {}
 local vKProceed = true
 local oldPos
 
-
 local cVConns = {}
+
+local movesTbl = { -- false = ready
+	["1"] = false,
+	["2"] = false,
+	["3"] = false,
+	["4"] = false
+}
+
+local canStartVK = false
+
+local moves = Player.PlayerGui.Hotbar.Backpack.Hotbar
 -- FUNCTIONS
+
+for _, button in pairs(moves:GetDescendants()) do
+	if button:IsA("TextButton") then
+
+		if movesTbl[button.Name] ~= nil then
+
+			button.DescendantAdded:Connect(function(desc)
+				if desc.Name == "Cooldown" then
+					movesTbl[button.Name] = true
+					print(button.Name .. " is on cooldown")
+				end
+				
+				if button.Name == "1" and movesTbl["1"] == true then
+					task.spawn(function() -- only flowing water can void kill
+						canStartVK = true
+						task.wait(2)
+						canStartVK = false
+					end)
+				end
+			end)
+
+			button.DescendantRemoving:Connect(function(desc)
+				if desc.Name == "Cooldown" then
+					movesTbl[button.Name] = false
+					print(button.Name .. " is ready")
+				end
+			end)
+
+		end
+	end
+end
 
 local function vKCode()
 	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
 		if c.Name == "ForceField" then
+			if not canStartVK then return end			
+			
 			local hf = Character:FindFirstChild("HunterFists")
 
 			if hf == nil then return end		
