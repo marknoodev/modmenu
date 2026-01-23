@@ -265,7 +265,7 @@ local function vKCode()
 
 				if not vKProceed then return end
 
-				HumanoidRootPart.CFrame = CFrame.new(0, -490, 0)
+				HumanoidRootPart.CFrame = CFrame.new(0, -450, 0)
 				task.wait(.4)
 				HumanoidRootPart.CFrame = oldPos
 			end)
