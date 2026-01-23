@@ -396,13 +396,13 @@ local function createDCImage(chr)
 end
 
 local function cVReconnector(chr)
-	chr.ChildAdded:Connect(function(c)
+	cVConns[#cVConns+1] = chr.ChildAdded:Connect(function(c)
 		if c.Name == "Counter" and c:IsA("Accessory") then
 			createDCImage(chr)
 		end
 	end)
 
-	chr.ChildRemoved:Connect(function(c)
+	cVConns[#cVConns+1] = chr.ChildRemoved:Connect(function(c)
 		if c.Name == "Counter" and c:IsA("Accessory") then
 			chr.Head:FindFirstChild("CounterV"):Destroy()
 		end
@@ -411,6 +411,12 @@ end
 
 createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 	if isEnabled then
+		cVConns[#cVConns+1] = game.Players.PlayerAdded:Connect(function(plr)
+			if plr.Character then
+				cVReconnector(plr.Character)
+			end
+		end)
+		
 		for _, v in pairs(Live:GetChildren()) do		
 			if game.Players:GetPlayerFromCharacter(v) then		
 				local plr = game.Players:GetPlayerFromCharacter(v)
@@ -537,11 +543,11 @@ Player.CharacterAdded:Connect(function(char)
 	if forceAutoRotateConnection then -- it means it is on
 		forceAutoRotateCode(forceAutoRotateConnection)
 	end
-	
+
 	if antiBlockDebuffConnection then
 		antiBlockDebuffCode()
 	end
-	
+
 	if vKConns then
 		for _, conn in pairs(vKConns) do
 			if conn then
