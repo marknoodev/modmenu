@@ -298,18 +298,21 @@ end)
 
 -- Force AutoRotate
 
-local function forceAutoRotateCode(conn)
-	conn = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
+
+
+local forceAutoRotateConnection
+
+local function forceAutoRotateCode()
+	forceAutoRotateConnection = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
 		if not Character:FindFirstChild("Ragdoll") then
 			Humanoid.AutoRotate = true
 		end
 	end)
 end
 
-local forceAutoRotateConnection
 createModButton("Force AutoRotate", "Player", true, function(isEnabled)
 	if isEnabled then
-		forceAutoRotateCode(forceAutoRotateConnection)
+		forceAutoRotateCode()
 	elseif forceAutoRotateConnection then
 		forceAutoRotateConnection:Disconnect()
 		forceAutoRotateConnection = nil
@@ -541,7 +544,7 @@ Player.CharacterAdded:Connect(function(char)
 
 	-- Reloads the previous ' ON ' options
 	if forceAutoRotateConnection then -- it means it is on
-		forceAutoRotateCode(forceAutoRotateConnection)
+		forceAutoRotateCode()
 	end
 
 	if antiBlockDebuffConnection then
