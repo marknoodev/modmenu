@@ -260,7 +260,7 @@ local function vKCode()
 			if hf == nil then return end		
 
 			task.spawn(function()
-				task.wait(1.4)
+				task.wait(1.35)
 				oldPos = HumanoidRootPart.CFrame
 
 				if not vKProceed then return end
