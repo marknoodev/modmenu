@@ -486,7 +486,6 @@ Player.CharacterAdded:Connect(function(char)
 	end
 
 	if vKConns then
-		vKConns = {}
 		vKCode()
 	end
 
