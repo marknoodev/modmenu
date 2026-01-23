@@ -125,6 +125,7 @@ local canStartVK = false
 local vKEnabled = false
 
 -- FUNCTIONS
+
 local function cleanupConnections()
 	for _, connection in ipairs(movesConnector) do
 		connection:Disconnect()
@@ -169,130 +170,6 @@ end
 -- when starting
 if Player.Character then
 	setupMoves()
-end
-
-local function vKCode()
-	if not vKEnabled then return end
-	
-	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
-		if c.Name == "ForceField" then
-
-			if not canStartVK then return end			
-
-			local hf = Character:FindFirstChild("HunterFists")
-
-			if hf == nil then return end		
-
-			task.spawn(function()
-				task.wait(1.4)
-				oldPos = HumanoidRootPart.CFrame
-
-				if not vKProceed then return end
-
-				HumanoidRootPart.CFrame = CFrame.new(0, -490, 0)
-				task.wait(.4)
-				HumanoidRootPart.CFrame = oldPos
-			end)
-		elseif c.Name == "Effects" then
-			vKProceed = false
-		end
-	end)
-
-	vKConns[#vKConns+1] = Character.ChildRemoved:Connect(function(c)
-		if c.Name == "Effects" then
-			vKProceed = true
-		end
-	end)
-end
-
-local function createSounds()
-	for _, s in pairs(sounds) do
-		if s then
-			s:Destroy()
-		end
-	end
-
-	sounds = {}
-
-	local kjphysic = Instance.new("Sound")
-	kjphysic.SoundId = "rbxassetid://99126314241685"
-	kjphysic.Volume = 2.5
-	kjphysic.Parent = workspace
-
-	local kjvoice = Instance.new("Sound")
-	kjvoice.SoundId = "rbxassetid://128136381213631"
-	kjvoice.Volume = 2.5
-	kjvoice.Parent = workspace
-
-	local kjmusic = Instance.new("Sound")
-	kjmusic.SoundId = "rbxassetid://95410275491981"
-	kjmusic.Volume = 2.5
-	kjmusic.Parent = workspace
-
-	table.insert(sounds, kjphysic)
-	table.insert(sounds, kjvoice)
-	table.insert(sounds, kjmusic)
-end
-
-local function kjSetup(char)
-	Character = char
-	Humanoid = char:WaitForChild("Humanoid")
-	Animator = Humanoid:WaitForChild("Animator")
-
-	kjTrack = Animator:LoadAnimation(kjAnim)
-
-	createSounds()
-end
-
-local function createDCImage(chr)
-	local BillboardGui = Instance.new("BillboardGui")
-	local ImageLabel = Instance.new("ImageLabel")
-
-	--Properties:
-	BillboardGui.Name = "CounterV"
-	BillboardGui.Parent = chr.Head
-	BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	BillboardGui.Active = true
-	BillboardGui.LightInfluence = 1
-	BillboardGui.Size = UDim2.new(3, 0, 3, 0)
-	BillboardGui.StudsOffset = Vector3.new(0, 4, 0)
-
-	ImageLabel.Parent = BillboardGui
-	ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	ImageLabel.BackgroundTransparency = 1
-	ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	ImageLabel.BorderSizePixel = 0
-	ImageLabel.Size = UDim2.new(1, 0, 1, 0)
-	ImageLabel.Image = "rbxassetid://137607954274376"
-end
-
-local function cVReconnector(chr)
-	chr.ChildAdded:Connect(function(c)
-		if c.Name == "Counter" and c:IsA("Accessory") then
-			createDCImage(chr)
-		end
-	end)
-
-	chr.ChildRemoved:Connect(function(c)
-		if c.Name == "Counter" and c:IsA("Accessory") then
-			chr.Head:FindFirstChild("CounterV"):Destroy()
-		end
-	end)
-end
-
-local cloneCamConnection
-local function cloneCam()
-	local newCam = Instance.new("Camera")
-	newCam.CameraSubject = Humanoid
-	newCam.CameraType = Enum.CameraType.Custom
-	newCam.Parent = workspace
-
-	cam = newCam
-
-	cloneCamConnection = newCam:GetPropertyChangedSignal("CameraType"):Connect(function()
-		newCam:Destroy()
-		cloneCam()
-	end)
 end
 
 -- Toggle With T Key
@@ -369,6 +246,41 @@ createModButton("M1 Reset", "Combat", true, function(isEnabled)
 end)
 
 -- Void Kill
+
+local function vKCode()
+	if not vKEnabled then return end
+
+	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
+		if c.Name == "ForceField" then
+
+			if not canStartVK then return end			
+
+			local hf = Character:FindFirstChild("HunterFists")
+
+			if hf == nil then return end		
+
+			task.spawn(function()
+				task.wait(1.4)
+				oldPos = HumanoidRootPart.CFrame
+
+				if not vKProceed then return end
+
+				HumanoidRootPart.CFrame = CFrame.new(0, -490, 0)
+				task.wait(.4)
+				HumanoidRootPart.CFrame = oldPos
+			end)
+		elseif c.Name == "Effects" then
+			vKProceed = false
+		end
+	end)
+
+	vKConns[#vKConns+1] = Character.ChildRemoved:Connect(function(c)
+		if c.Name == "Effects" then
+			vKProceed = true
+		end
+	end)
+end
+
 createModButton("Void Kill", "Combat", true, function(isEnabled)
 	if isEnabled then
 		vKEnabled = true
@@ -385,21 +297,67 @@ createModButton("Void Kill", "Combat", true, function(isEnabled)
 end)
 
 -- Force AutoRotate
+
+local function forceAutoRotateCode(conn)
+	conn = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
+		if not Character:FindFirstChild("Ragdoll") then
+			Humanoid.AutoRotate = true
+		end
+	end)
+end
+
 local forceAutoRotateConnection
 createModButton("Force AutoRotate", "Player", true, function(isEnabled)
 	if isEnabled then
-		forceAutoRotateConnection = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
-			if not Character:FindFirstChild("Ragdoll") then
-				Humanoid.AutoRotate = true
-			end
-		end)
+		forceAutoRotateCode(forceAutoRotateConnection)
 	elseif forceAutoRotateConnection then
 		forceAutoRotateConnection:Disconnect()
 		forceAutoRotateConnection = nil
 	end
 end)
 
+-- Anti Block Debuff
+
+local antiBlockDebuffConnection
+
+local function antiBlockDebuffCode()
+	if Character:GetAttribute("Blocking") == nil then
+		Character:SetAttribute("Blocking", false)
+	end
+
+	antiBlockDebuffConnection = Character:GetAttributeChangedSignal("Blocking"):Connect(function()
+		if Character:GetAttribute("Blocking") == true then
+			Character:SetAttribute("Blocking", false)
+		end
+	end)
+end
+
+createModButton("Anti Block Debuff", "Player", true, function(isEnabled)
+	if isEnabled then
+		antiBlockDebuffCode()
+	elseif antiBlockDebuffConnection then
+		antiBlockDebuffConnection:Disconnect()
+		antiBlockDebuffConnection = nil
+	end
+end)
+
 -- No Cutscene
+
+local cloneCamConnection
+local function cloneCam()
+	local newCam = Instance.new("Camera")
+	newCam.CameraSubject = Humanoid
+	newCam.CameraType = Enum.CameraType.Custom
+	newCam.Parent = workspace
+
+	cam = newCam
+
+	cloneCamConnection = newCam:GetPropertyChangedSignal("CameraType"):Connect(function()
+		newCam:Destroy()
+		cloneCam()
+	end)
+end
+
 local noCutsceneConnection
 createModButton("No Cutscene", "Miscellaneous", true, function(isEnabled)
 	if isEnabled then
@@ -414,6 +372,42 @@ createModButton("No Cutscene", "Miscellaneous", true, function(isEnabled)
 end)
 
 -- Counter Visualizer
+
+local function createDCImage(chr)
+	local BillboardGui = Instance.new("BillboardGui")
+	local ImageLabel = Instance.new("ImageLabel")
+
+	--Properties:
+	BillboardGui.Name = "CounterV"
+	BillboardGui.Parent = chr.Head
+	BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+	BillboardGui.Active = true
+	BillboardGui.LightInfluence = 1
+	BillboardGui.Size = UDim2.new(3, 0, 3, 0)
+	BillboardGui.StudsOffset = Vector3.new(0, 4, 0)
+
+	ImageLabel.Parent = BillboardGui
+	ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	ImageLabel.BackgroundTransparency = 1
+	ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+	ImageLabel.BorderSizePixel = 0
+	ImageLabel.Size = UDim2.new(1, 0, 1, 0)
+	ImageLabel.Image = "rbxassetid://137607954274376"
+end
+
+local function cVReconnector(chr)
+	chr.ChildAdded:Connect(function(c)
+		if c.Name == "Counter" and c:IsA("Accessory") then
+			createDCImage(chr)
+		end
+	end)
+
+	chr.ChildRemoved:Connect(function(c)
+		if c.Name == "Counter" and c:IsA("Accessory") then
+			chr.Head:FindFirstChild("CounterV"):Destroy()
+		end
+	end)
+end
 
 createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 	if isEnabled then
@@ -454,6 +448,46 @@ createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 end)
 
 -- KJ Flexworks Anim
+local function createSounds()
+	for _, s in pairs(sounds) do
+		if s then
+			s:Destroy()
+		end
+	end
+
+	sounds = {}
+
+	local kjphysic = Instance.new("Sound")
+	kjphysic.SoundId = "rbxassetid://99126314241685"
+	kjphysic.Volume = 2.5
+	kjphysic.Parent = workspace
+
+	local kjvoice = Instance.new("Sound")
+	kjvoice.SoundId = "rbxassetid://128136381213631"
+	kjvoice.Volume = 2.5
+	kjvoice.Parent = workspace
+
+	local kjmusic = Instance.new("Sound")
+	kjmusic.SoundId = "rbxassetid://95410275491981"
+	kjmusic.Volume = 2.5
+	kjmusic.Parent = workspace
+
+	table.insert(sounds, kjphysic)
+	table.insert(sounds, kjvoice)
+	table.insert(sounds, kjmusic)
+end
+
+local function kjSetup(char)
+	Character = char
+	Humanoid = char:WaitForChild("Humanoid")
+	Animator = Humanoid:WaitForChild("Animator")
+
+	kjTrack = Animator:LoadAnimation(kjAnim)
+
+	createSounds()
+end
+
+
 createModButton("KJ Flexworks Anim", "Miscellaneous", false, function()
 	kjSetup(Character)
 
@@ -501,13 +535,13 @@ Player.CharacterAdded:Connect(function(char)
 
 	-- Reloads the previous ' ON ' options
 	if forceAutoRotateConnection then -- it means it is on
-		forceAutoRotateConnection = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
-			if not char:FindFirstChild("Ragdoll") then
-				Humanoid.AutoRotate = true
-			end
-		end)
+		forceAutoRotateCode(forceAutoRotateConnection)
 	end
-
+	
+	if antiBlockDebuffConnection then
+		antiBlockDebuffCode()
+	end
+	
 	if vKConns then
 		for _, conn in pairs(vKConns) do
 			if conn then
