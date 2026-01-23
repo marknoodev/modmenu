@@ -486,14 +486,7 @@ Player.CharacterAdded:Connect(function(char)
 	end
 
 	if vKConns then
-		for _, conn in pairs(vKConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
 		vKConns = {}
-
 		vKCode()
 	end
 
