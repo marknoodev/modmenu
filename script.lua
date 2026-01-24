@@ -419,7 +419,7 @@ createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 				cVReconnector(plr.Character)
 			end
 		end)
-		
+
 		for _, v in pairs(Live:GetChildren()) do		
 			if game.Players:GetPlayerFromCharacter(v) then		
 				local plr = game.Players:GetPlayerFromCharacter(v)
@@ -535,13 +535,37 @@ createModButton("KJ Flexworks Anim", "Miscellaneous", false, function()
 	end)
 end)
 
+local counterID = "rbxassetid://12351854556"
+
+local counterAnim = Instance.new("Animation")
+counterAnim.AnimationId = counterID
+
+local counterTrack = Animator:LoadAnimation(counterAnim)
+
+-- Fake Counter
+createModButton("Fake Counter", "Miscellaneous", false, function()
+	uis.InputBegan:Connect(function(i, p)
+		if p then return end
+		
+		if i.KeyCode == Enum.KeyCode.X then
+			if counterTrack.IsPlaying then
+				counterTrack:Stop()
+			end
+			
+			counterTrack:Play()
+		end
+	end)
+end)
+
 Player.CharacterAdded:Connect(function(char)
 	task.wait(.1)
 
 	Character = char
 	Humanoid = char:WaitForChild("Humanoid")
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
-
+	Animator = Humanoid:WaitForChild("Animator")
+	counterTrack = Animator:LoadAnimation(counterAnim)
+	
 	-- Reloads the previous ' ON ' options
 	if forceAutoRotateConnection then -- it means it is on
 		forceAutoRotateCode()
