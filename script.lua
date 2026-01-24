@@ -260,13 +260,13 @@ local function vKCode()
 			if hf == nil then return end		
 
 			task.spawn(function()
-				task.wait(1.35)
+				task.wait(1.2)
 				oldPos = HumanoidRootPart.CFrame
 
 				if not vKProceed then return end
 
 				HumanoidRootPart.CFrame = CFrame.new(0, -450, 0)
-				task.wait(.4)
+				task.wait(.5)
 				HumanoidRootPart.CFrame = oldPos
 			end)
 		elseif c.Name == "Effects" then
