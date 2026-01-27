@@ -836,7 +836,7 @@ createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
 
 		for _, v in pairs(Live:GetChildren()) do
 			if v:FindFirstChild("ImHighRn") then
-				v.ImHighRn:Destroy())
+				v.ImHighRn:Destroy()
 			end
 		end
 	end
