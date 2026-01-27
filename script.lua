@@ -1,10 +1,3 @@
---[[
-
-Highlight's Priority Level:
-1 - Damage Highlight
-
-]]--
-
 -- Detector
 local placeId = 10449761463
 if game.PlaceId ~= placeId then return end
