@@ -2,7 +2,6 @@
 
 Highlight's Priority Level:
 1 - Damage Highlight
-2 - ESP Highlight
 
 ]]--
 
@@ -786,7 +785,6 @@ local function dmgVisualizerCode2(chr)
 		local h = nil
 
 		if chr:FindFirstChild("ImHighRn") == nil then
-			chr:SetAttribute("CanESP", false)
 
 			h = Instance.new("Highlight")
 			h.Name = "ImHighRn"
@@ -806,7 +804,6 @@ local function dmgVisualizerCode2(chr)
 		local highlight = chr:FindFirstChild("ImHighRn")
 		if highlight then
 			highlight:Destroy()
-			chr:SetAttribute("CanESP", true)
 		end
 	end)
 end
@@ -846,84 +843,9 @@ createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
 
 		for _, v in pairs(Live:GetChildren()) do
 			if v:FindFirstChild("ImHighRn") then
-				v.ImHighRn:Destroy()
-				v:SetAttribute("CanESP", true)
+				v.ImHighRn:Destroy())
 			end
 		end
-	end
-end)
-
--- ESP
-
-local espConns = {}
-
-local function espCode(chr)
-	local h = Instance.new("Highlight")
-	h.Name = "yeESP"
-	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	h.FillColor = Color3.fromRGB(0, 185)
-	h.FillTransparency = .5
-	h.OutlineColor = Color3.fromRGB(0, 124)
-	h.Parent = chr
-
-	espConns[#espConns+1] = chr:GetAttributeChangedSignal("CanESP"):Connect(function()
-		local esp = chr:GetAttribute("CanESP")
-
-		if esp then -- idle mode
-			local h = Instance.new("Highlight")
-			h.Name = "yeESP"
-			h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-			h.FillColor = Color3.fromRGB(0, 185)
-			h.FillTransparency = .5
-			h.OutlineColor = Color3.fromRGB(0, 124)
-			h.Parent = chr
-		elseif chr:FindFirstChild("yeESP") then -- when enemy received damage
-			chr.yeESP:Destroy()
-		end
-	end)
-end
-
-for _, v in pairs(game.Players:GetPlayers()) do -- for players who was already ingame
-	v.CharacterAdded:Connect(function(chr)
-		chr:SetAttribute("CanESP", false)
-	end)
-end
-
-game.Players.PlayerAdded:Connect(function(plr) -- for new players
-	plr.CharacterAdded:Connect(function(chr)
-		chr:SetAttribute("CanESP", false)
-	end)
-end)
-
-createModButton("ESP", "Visuals", true, function(isEnabled)
-	if isEnabled then
-		for _, chr in pairs(Live:GetChildren()) do
-			if chr == Character then continue end
-
-			local plr = game.Players:GetPlayerFromCharacter(chr)
-
-			if not plr then continue end
-
-			espCode(chr)
-
-			espConns[#espConns+1] = plr.CharacterAdded:Connect(function(chr)
-				espCode(chr)
-			end)
-		end
-	elseif espConns then
-		for _, conn in pairs(espConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
-		for _, chr in pairs(Live:GetChildren()) do
-			if chr:FindFirstChild("yeESP") then
-				chr.yeESP:Destroy()
-			end
-		end
-
-		espConns = {}
 	end
 end)
 
