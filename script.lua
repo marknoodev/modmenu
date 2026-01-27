@@ -947,7 +947,7 @@ local function antiDCCode()
 				Character:FindFirstChild("NoRotate"):Destroy()
 			end
 
-			hrp.CFrame = oldPos
+			HumanoidRootPart.CFrame = oldPos
 		end
 	end)
 end
@@ -970,11 +970,11 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-	
+
 	if antiDeathCounterConnection then
 		antiDCCode()
 	end
-	
+
 	if forceAutoRotateConnection then -- it means it is on
 		forceAutoRotateCode()
 	end
@@ -999,8 +999,11 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	kjSetup(char)
 
 	if dmgVisualizerConns then
-		dmgVisualizerConns:Disconnect()
-		dmgVisualizerConns = nil
+		for _, conn in pairs(dmgVisualizerConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
 
 		dmgVisualizerCode()
 	end
