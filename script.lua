@@ -787,7 +787,7 @@ local function dmgVisualizerCode2(chr)
 
 		if chr:FindFirstChild("ImHighRn") == nil then
 			chr:SetAttribute("CanESP", false)
-			
+
 			h = Instance.new("Highlight")
 			h.Name = "ImHighRn"
 			h.FillColor = Color3.new(1)
@@ -865,7 +865,7 @@ local function espCode(chr)
 	h.FillTransparency = .5
 	h.OutlineColor = Color3.fromRGB(0, 124)
 	h.Parent = chr
-	
+
 	espConns[#espConns+1] = chr:GetAttributeChangedSignal("CanESP"):Connect(function()
 		local esp = chr:GetAttribute("CanESP")
 
@@ -883,38 +883,6 @@ local function espCode(chr)
 	end)
 end
 
-createModButton("ESP", "Visuals", true, function(isEnabled)
-	if isEnabled then
-		for _, chr in pairs(Live:GetChildren()) do
-			if chr == Character then continue end
-			
-			local plr = game.Players:GetPlayerFromCharacter(chr)
-			
-			if not plr then continue end
-			
-			espCode(chr)
-			
-			espConns[#espConns+1] = plr.CharacterAdded:Connect(function(chr)
-				espCode(chr)
-			end)
-		end
-	elseif espConns then
-		for _, conn in pairs(espConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-		
-		for _, chr in pairs(Live:GetChildren()) do
-			if chr:FindFirstChild("yeESP") then
-				chr.yeESP:Destroy()
-			end
-		end
-		
-		espConns = {}
-	end
-end)
-
 for _, v in pairs(game.Players:GetPlayers()) do -- for players who was already ingame
 	v.CharacterAdded:Connect(function(chr)
 		chr:SetAttribute("CanESP", false)
@@ -927,6 +895,72 @@ game.Players.PlayerAdded:Connect(function(plr) -- for new players
 	end)
 end)
 
+createModButton("ESP", "Visuals", true, function(isEnabled)
+	if isEnabled then
+		for _, chr in pairs(Live:GetChildren()) do
+			if chr == Character then continue end
+
+			local plr = game.Players:GetPlayerFromCharacter(chr)
+
+			if not plr then continue end
+
+			espCode(chr)
+
+			espConns[#espConns+1] = plr.CharacterAdded:Connect(function(chr)
+				espCode(chr)
+			end)
+		end
+	elseif espConns then
+		for _, conn in pairs(espConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+
+		for _, chr in pairs(Live:GetChildren()) do
+			if chr:FindFirstChild("yeESP") then
+				chr.yeESP:Destroy()
+			end
+		end
+
+		espConns = {}
+	end
+end)
+
+-- Anti Death Counter
+
+local antiDeathCounterConnection
+
+local function antiDCCode()
+	antiDeathCounterConnection = Character.ChildAdded:Connect(function(child)
+		if child.Name == "NoRotateUltimate" then
+			local oldPos = HumanoidRootPart.CFrame
+			HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)	
+
+			task.wait(.8)
+
+			if Character:FindFirstChild("Freeze") then
+				Character:FindFirstChild("Freeze"):Destroy()
+			end
+
+			if Character:FindFirstChild("NoRotate") then
+				Character:FindFirstChild("NoRotate"):Destroy()
+			end
+
+			hrp.CFrame = oldPos
+		end
+	end)
+end
+
+createModButton("Anti Death Counter", "Player", true, function(isEnabled)
+	if isEnabled then
+		antiDCCode()
+	elseif antiDeathCounterConnection then
+		antiDeathCounterConnection:Disconnect()
+		antiDeathCounterConnection = nil
+	end
+end)
+
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
@@ -936,6 +970,11 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
+	
+	if antiDeathCounterConnection then
+		antiDCCode()
+	end
+	
 	if forceAutoRotateConnection then -- it means it is on
 		forceAutoRotateCode()
 	end
