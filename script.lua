@@ -16,7 +16,7 @@ local uis = game:GetService("UserInputService")
 -- Player Variables
 local Player = game.Players.LocalPlayer
 
-if Player.PlayerGui:FindFirstChild("ZM V1.2") then return end
+if Player.PlayerGui:FindFirstChild("ZM V1.3") then return end
 
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
@@ -28,7 +28,7 @@ local ScreenGui = Instance.new("ScreenGui")
 local bg = Instance.new("Frame")
 local extraFolder = Instance.new("Folder")
 
-ScreenGui.Name = "ZM V1.2"
+ScreenGui.Name = "ZM V1.3"
 ScreenGui.Enabled = false
 ScreenGui.Parent = Player:WaitForChild("PlayerGui")
 ScreenGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
