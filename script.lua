@@ -7,6 +7,9 @@ local uis = game:GetService("UserInputService")
 
 -- Player Variables
 local Player = game.Players.LocalPlayer
+
+if Player.PlayerGui:FindFirstChild("ZM V1.2") then return end
+
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 local Humanoid = Character:FindFirstChild("Humanoid")
@@ -552,13 +555,13 @@ end
 createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 	if isEnabled then
 		cVConns[#cVConns+1] = game.Players.PlayerAdded:Connect(function(plr)
-			if plr.Character then
-				cVReconnector(plr.Character)
-			end
+			cVConns[#cVConns+1] = plr.CharacterAdded:Connect(function(chr)
+				cVReconnector(chr)
+			end)		
 		end)
 
 		for _, v in pairs(Live:GetChildren()) do		
-			if game.Players:GetPlayerFromCharacter(v) then		
+			if game.Players:GetPlayerFromCharacter(v) and v ~= Character then		
 				local plr = game.Players:GetPlayerFromCharacter(v)
 
 				if v:FindFirstChild("Counter") then
@@ -590,6 +593,12 @@ createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 		end
 
 		cVConns = {}
+		
+		for _, v in pairs(Live:GetChildren()) do
+			if v.Head:FindFirstChild("CounterV") then
+				v.Head.CounterV:Destroy()
+			end
+		end
 	end
 end)
 
@@ -790,6 +799,81 @@ end, function() -- extra part
 
 end)
 
+-- Damage Visualizer
+local dmgVisualizerConns = {}
+
+local function dmgVisualizerCode2(chr)
+	if chr:GetAttribute("LastDamage") == nil then
+		chr:SetAttribute("LastDamage", 0)
+	end
+
+	dmgVisualizerConns[#dmgVisualizerConns+1] = chr:GetAttributeChangedSignal("LastDamage"):Connect(function()
+		local h = nil
+		
+		if chr:FindFirstChild("ImHighRn") == nil then
+			h = Instance.new("Highlight")
+			h.Name = "ImHighRn"
+			h.FillColor = Color3.new(1)
+			h.FillTransparency = .6
+			h.OutlineColor = Color3.fromRGB(150)
+			h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			h.Parent = chr
+		end
+
+		local savedNumber = chr:GetAttribute("LastDamage")
+
+		task.wait(.6)
+
+		if savedNumber ~= chr:GetAttribute("LastDamage") then return end
+
+		local highlight = chr:FindFirstChild("ImHighRn")
+		if highlight then
+			highlight:Destroy()
+		end
+	end)
+end
+
+local function dmgVisualizerCode()
+	dmgVisualizerConns[#dmgVisualizerConns+1] = game.Players.PlayerAdded:Connect(function(plr)
+		dmgVisualizerConns[#dmgVisualizerConns+1] = plr.CharacterAdded:Connect(function(chr)
+			dmgVisualizerCode2(chr)	
+		end)
+	end)
+	
+	for _, chr in pairs(Live:GetChildren()) do
+		if chr ~= Character then
+			local plr = game.Players:GetPlayerFromCharacter(chr)
+			if not plr then continue end -- continue just reset the actual round of for loop
+			
+			dmgVisualizerCode2(chr)
+			
+			dmgVisualizerConns[#dmgVisualizerConns+1] = plr.CharacterAdded:Connect(function(chr)
+				dmgVisualizerCode2(chr)
+			end)
+		end
+	end
+end
+
+createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
+	if isEnabled then
+		dmgVisualizerCode()
+	elseif dmgVisualizerConns then
+		for _, conn in pairs(dmgVisualizerConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+		
+		dmgVisualizerConns = {}
+		
+		for _, v in pairs(Live:GetChildren()) do
+			if v:FindFirstChild("ImHighRn") then
+				v.ImHighRn:Destroy()
+			end
+		end
+	end
+end)
+
 Player.CharacterAdded:Connect(function(char)
 	task.wait(.1)
 
@@ -821,4 +905,11 @@ Player.CharacterAdded:Connect(function(char)
 	setupMoves()
 
 	kjSetup(char)
+	
+	if dmgVisualizerConns then
+		dmgVisualizerConns:Disconnect()
+		dmgVisualizerConns = nil
+		
+		dmgVisualizerCode()
+	end
 end)
