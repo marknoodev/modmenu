@@ -1,3 +1,11 @@
+--[[
+
+Highlight's Priority Level:
+1 - Damage Highlight
+2 - ESP Highlight
+
+]]--
+
 -- Detector
 local placeId = 10449761463
 if game.PlaceId ~= placeId then return end
@@ -593,7 +601,7 @@ createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 		end
 
 		cVConns = {}
-		
+
 		for _, v in pairs(Live:GetChildren()) do
 			if v.Head:FindFirstChild("CounterV") then
 				v.Head.CounterV:Destroy()
@@ -761,42 +769,9 @@ createModButton("Fake Anims", "Miscellaneous", true, function(isEnabled)
 
 end, function() -- extra part
 	local location = Extras["Fake Anims"]
-	createExtraButton("Normal Punch", location)
-	createExtraButton("Consecutive Punches", location)
-	createExtraButton("Shove", location)
-	createExtraButton("Uppercut", location)
-	createExtraButton("Saitama Ult", location)
-	createExtraButton("Table Flip", location)
-	createExtraButton("Serious Punch", location)
-	createExtraButton("Omni Directional Punch", location)
-	createExtraButton("Mosquito", location)
-
-	-- Garou
-	createExtraButton("Garou Ult", location)
-	createExtraButton("Flowing Water", location)
-	createExtraButton("Lethal Whirlwind Stream", location)
-	createExtraButton("Hunter's Grasp", location)
-	createExtraButton("Prey's Peril", location)
-	createExtraButton("Water Stream Cutting Fist", location)
-	createExtraButton("The Final Hunt", location)
-	createExtraButton("Rock Splitting Fist", location)
-	createExtraButton("Crushed Rock", location)
-
-	-- Genos
-	createExtraButton("Genos Ult", location)
-	createExtraButton("Machine Gun Blows", location)
-	createExtraButton("Thunder Kick", location)
-	createExtraButton("Speedblitz Dropkick", location)
-	createExtraButton("Flamewave Cannon", location)
-	createExtraButton("Incinerate", location)
-
-	-- Sonic
-	createExtraButton("Sonic Ult", location)
-	createExtraButton("Flash Strike", location)
-	createExtraButton("Whirlwind Kick", location)
-	createExtraButton("Explosive Shuriken", location)
-	createExtraButton("Carnage", location)
-
+	for i, v in pairs(AnimIDS) do
+		createExtraButton(i, location)
+	end
 end)
 
 -- Damage Visualizer
@@ -809,26 +784,29 @@ local function dmgVisualizerCode2(chr)
 
 	dmgVisualizerConns[#dmgVisualizerConns+1] = chr:GetAttributeChangedSignal("LastDamage"):Connect(function()
 		local h = nil
-		
+
 		if chr:FindFirstChild("ImHighRn") == nil then
+			chr:SetAttribute("CanESP", false)
+			
 			h = Instance.new("Highlight")
 			h.Name = "ImHighRn"
 			h.FillColor = Color3.new(1)
 			h.FillTransparency = .6
 			h.OutlineColor = Color3.fromRGB(150)
-			h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			h.DepthMode = Enum.HighlightDepthMode.Occluded
 			h.Parent = chr
 		end
 
 		local savedNumber = chr:GetAttribute("LastDamage")
 
-		task.wait(.6)
+		task.wait(.7)
 
 		if savedNumber ~= chr:GetAttribute("LastDamage") then return end
 
 		local highlight = chr:FindFirstChild("ImHighRn")
 		if highlight then
 			highlight:Destroy()
+			chr:SetAttribute("CanESP", true)
 		end
 	end)
 end
@@ -839,14 +817,14 @@ local function dmgVisualizerCode()
 			dmgVisualizerCode2(chr)	
 		end)
 	end)
-	
+
 	for _, chr in pairs(Live:GetChildren()) do
 		if chr ~= Character then
 			local plr = game.Players:GetPlayerFromCharacter(chr)
 			if not plr then continue end -- continue just reset the actual round of for loop
-			
+
 			dmgVisualizerCode2(chr)
-			
+
 			dmgVisualizerConns[#dmgVisualizerConns+1] = plr.CharacterAdded:Connect(function(chr)
 				dmgVisualizerCode2(chr)
 			end)
@@ -863,18 +841,93 @@ createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
 				conn:Disconnect()
 			end
 		end
-		
+
 		dmgVisualizerConns = {}
-		
+
 		for _, v in pairs(Live:GetChildren()) do
 			if v:FindFirstChild("ImHighRn") then
 				v.ImHighRn:Destroy()
+				v:SetAttribute("CanESP", true)
 			end
 		end
 	end
 end)
 
-Player.CharacterAdded:Connect(function(char)
+-- ESP
+
+local espConns = {}
+
+local function espCode(chr)
+	local h = Instance.new("Highlight")
+	h.Name = "yeESP"
+	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	h.FillColor = Color3.fromRGB(0, 185)
+	h.FillTransparency = .5
+	h.OutlineColor = Color3.fromRGB(0, 124)
+	h.Parent = chr
+	
+	espConns[#espConns+1] = chr:GetAttributeChangedSignal("CanESP"):Connect(function()
+		local esp = chr:GetAttribute("CanESP")
+
+		if esp then -- idle mode
+			local h = Instance.new("Highlight")
+			h.Name = "yeESP"
+			h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			h.FillColor = Color3.fromRGB(0, 185)
+			h.FillTransparency = .5
+			h.OutlineColor = Color3.fromRGB(0, 124)
+			h.Parent = chr
+		elseif chr:FindFirstChild("yeESP") then -- when enemy received damage
+			chr.yeESP:Destroy()
+		end
+	end)
+end
+
+createModButton("ESP", "Visuals", true, function(isEnabled)
+	if isEnabled then
+		for _, chr in pairs(Live:GetChildren()) do
+			if chr == Character then continue end
+			
+			local plr = game.Players:GetPlayerFromCharacter(chr)
+			
+			if not plr then continue end
+			
+			espCode(chr)
+			
+			espConns[#espConns+1] = plr.CharacterAdded:Connect(function(chr)
+				espCode(chr)
+			end)
+		end
+	elseif espConns then
+		for _, conn in pairs(espConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+		
+		for _, chr in pairs(Live:GetChildren()) do
+			if chr:FindFirstChild("yeESP") then
+				chr.yeESP:Destroy()
+			end
+		end
+		
+		espConns = {}
+	end
+end)
+
+for _, v in pairs(game.Players:GetPlayers()) do -- for players who was already ingame
+	v.CharacterAdded:Connect(function(chr)
+		chr:SetAttribute("CanESP", false)
+	end)
+end
+
+game.Players.PlayerAdded:Connect(function(plr) -- for new players
+	plr.CharacterAdded:Connect(function(chr)
+		chr:SetAttribute("CanESP", false)
+	end)
+end)
+
+Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
 	Character = char
@@ -905,11 +958,11 @@ Player.CharacterAdded:Connect(function(char)
 	setupMoves()
 
 	kjSetup(char)
-	
+
 	if dmgVisualizerConns then
 		dmgVisualizerConns:Disconnect()
 		dmgVisualizerConns = nil
-		
+
 		dmgVisualizerCode()
 	end
 end)
