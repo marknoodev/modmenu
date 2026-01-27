@@ -223,10 +223,9 @@ local function createModButton(name, category, toggle, code, extraCode)
 		local ScrollingFrame = Instance.new("ScrollingFrame")
 		local TextLabel = Instance.new("TextLabel")
 		local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
-		local extraHolder = Instance.new("Frame")
 		local UIGridLayout = Instance.new("UIGridLayout")
 		local extraHider = Instance.new("TextButton")
-		
+
 		ScrollingFrame.Name = tostring(name)
 		ScrollingFrame.Visible = false
 		ScrollingFrame.Parent = extraFolder
@@ -235,12 +234,10 @@ local function createModButton(name, category, toggle, code, extraCode)
 		ScrollingFrame.BorderSizePixel = 0
 		ScrollingFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 		ScrollingFrame.Size = UDim2.new(0.17, 0, 0.7, 0)
-		ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- IMPORTANTE: mudar para 0
-		ScrollingFrame.ScrollBarThickness = 6 -- Tornar a barra visível
+		ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+		ScrollingFrame.ScrollBarThickness = 0
 		ScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-		ScrollingFrame.ScrollingEnabled = true
-		ScrollingFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100) -- Opcional: cor da barra
-		
+
 		TextLabel.Parent = ScrollingFrame
 		TextLabel.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
 		TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -255,17 +252,8 @@ local function createModButton(name, category, toggle, code, extraCode)
 		UITextSizeConstraint.Parent = TextLabel
 		UITextSizeConstraint.MaxTextSize = 33
 
-		extraHolder.Name = "extraHolder"
-		extraHolder.Parent = ScrollingFrame
-		extraHolder.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-		extraHolder.BackgroundTransparency = 1
-		extraHolder.BorderSizePixel = 0
-		extraHolder.Position = UDim2.new(0, 0, 0.04, 0)
-		extraHolder.Size = UDim2.new(1, 0, 0.96, 0)
-		extraHolder.ZIndex = 2
-
-		UIGridLayout.Parent = extraHolder
-		UIGridLayout.FillDirection = Enum.FillDirection.Vertical
+		UIGridLayout.Parent = ScrollingFrame
+		UIGridLayout.FillDirection = Enum.FillDirection.Horizontal
 		UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
 		UIGridLayout.CellPadding = UDim2.new(0, 0, 0, 0)
 		UIGridLayout.CellSize = UDim2.new(1, 0, 0.07, 0)
@@ -763,7 +751,7 @@ createModButton("Fake Anims", "Miscellaneous", true, function(isEnabled)
 	end
 
 end, function() -- extra part
-	local location = Extras["Fake Anims"].extraHolder
+	local location = Extras["Fake Anims"]
 	createExtraButton("Normal Punch", location)
 	createExtraButton("Consecutive Punches", location)
 	createExtraButton("Shove", location)
