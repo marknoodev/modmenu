@@ -444,6 +444,10 @@ end)
 local forceAutoRotateConnection
 
 local function forceAutoRotateCode()
+	if not Character:FindFirstChild("Ragdoll") then
+		Humanoid.AutoRotate = true
+	end
+	
 	forceAutoRotateConnection = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
 		if not Character:FindFirstChild("Ragdoll") then
 			Humanoid.AutoRotate = true
@@ -724,7 +728,7 @@ local AnimIDS = {
 	["Whirlwind Kick"] = 13294790250,
 	["Explosive Shuriken"] = 13501296372,
 	["Carnage"] = 13723174078,
-	
+
 	-- KJ
 	["KJ Ult 1"] = 17140902079
 }
@@ -740,15 +744,15 @@ local function playAnim()
 	anim.AnimationId = "rbxassetid://" .. AnimIDS[selectedAnim.Text]
 	currentTrack = Animator:LoadAnimation(anim)
 	currentTrack.Priority = Enum.AnimationPriority.Action4
-	
+
 	cp:PreloadAsync({anim})
-	
+
 	if oldTrack then
 		oldTrack:Stop()
 	end
-	
+
 	oldTrack = currentTrack
-	
+
 	currentTrack:Play()
 end
 
