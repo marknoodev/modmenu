@@ -394,7 +394,7 @@ local vKFlowingWater = false
 
 local function vKCode()
 	if not vKEnabled then return end
-	
+
 	vKConns[#vKConns+1] = Character.DescendantAdded:Connect(function(d)
 		if d.Name == "Flowing Water" then
 			vKFlowingWater = true
@@ -402,7 +402,7 @@ local function vKCode()
 			vKFlowingWater = false
 		end
 	end)
-	
+
 	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
 		if c.Name == "ForceField" then
 
@@ -412,7 +412,7 @@ local function vKCode()
 
 			if hf == nil then return end		
 			if not vKFlowingWater then return end
-			
+
 			task.spawn(function()
 				task.wait(1.3)
 				oldPos = HumanoidRootPart.CFrame
@@ -902,6 +902,61 @@ createModButton("Anti Death Counter", "Player", true, function(isEnabled)
 	end
 end)
 
+-- Korblox + Headless
+
+local oldChrMesh ={
+	MeshId = 0,
+	OverlayTextureId = 0
+}
+
+local cMesh = nil
+
+local function korbloxHeadlessCode()
+	if Character:FindFirstChild("Head") then -- Headless
+		if Character:FindFirstChild("Head") then -- Headless
+			local mesh = Instance.new("SpecialMesh", Character.Head)
+			mesh.Name = "fHeadless"
+			mesh.MeshType = Enum.MeshType.FileMesh
+		end
+	end
+	
+	for _, mesh in pairs(Character:GetChildren()) do
+		if mesh:IsA("CharacterMesh") and mesh.BodyPart == Enum.BodyPart.RightLeg then
+			cMesh = mesh
+			oldChrMesh.MeshId = cMesh.MeshId -- if plr has an chrMesh then it will save it
+			oldChrMesh.OverlayTextureId = cMesh.OverlayTextureId
+
+			mesh.MeshId = 101851696
+			mesh.OverlayTextureId = 101851254
+		else
+			cMesh = Instance.new("CharacterMesh", Character)
+			cMesh.BodyPart = Enum.BodyPart.RightLeg
+			cMesh.MeshId = 101851696
+			cMesh.OverlayTextureId = 101851254
+		end
+		break
+	end
+end
+
+createModButton("Korblox + Headless", "Visuals", true, function(isEnabled)
+	if isEnabled then
+		korbloxHeadlessCode()
+	else
+		cMesh.MeshId = oldChrMesh.MeshId
+		cMesh.OverlayTextureId = oldChrMesh.OverlayTextureId
+		cMesh:Destroy()
+		
+		cMesh = nil
+		
+		local head = Character:FindFirstChild("Head")
+		local hMesh = head:FindFirstChild("fHeadless")
+		
+		if hMesh then
+			hMesh:Destroy()
+		end
+	end
+end)
+
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
@@ -911,7 +966,12 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-
+	
+	
+	if cMesh ~= nil then
+		korbloxHeadlessCode("wonderifixedit")
+	end
+	
 	if antiDeathCounterConnection then
 		antiDCCode()
 	end
