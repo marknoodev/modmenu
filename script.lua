@@ -4,6 +4,7 @@ if game.PlaceId ~= placeId then return end
 
 -- Services
 local uis = game:GetService("UserInputService")
+local cp = game:GetService("ContentProvider")
 
 -- Player Variables
 local Player = game.Players.LocalPlayer
@@ -723,21 +724,31 @@ local AnimIDS = {
 	["Whirlwind Kick"] = 13294790250,
 	["Explosive Shuriken"] = 13501296372,
 	["Carnage"] = 13723174078,
+	
+	-- KJ
+	["KJ Ult 1"] = 17140902079
 }
 
 
 local currentTrack = nil
+local oldTrack = nil
+
+local activeKjSounds = {}
 
 local function playAnim()
 	local anim = Instance.new("Animation")
 	anim.AnimationId = "rbxassetid://" .. AnimIDS[selectedAnim.Text]
 	currentTrack = Animator:LoadAnimation(anim)
 	currentTrack.Priority = Enum.AnimationPriority.Action4
-
-	if currentTrack.IsPlaying then
-		currentTrack:Stop()
+	
+	cp:PreloadAsync({anim})
+	
+	if oldTrack then
+		oldTrack:Stop()
 	end
-
+	
+	oldTrack = currentTrack
+	
 	currentTrack:Play()
 end
 
