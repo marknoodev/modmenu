@@ -390,9 +390,19 @@ end)
 
 -- Void Kill
 
+local vKFlowingWater = false
+
 local function vKCode()
 	if not vKEnabled then return end
-
+	
+	vKConns[#vKConns+1] = Character.DescendantAdded:Connect(function(d)
+		if d.Name == "Flowing Water" then
+			vKFlowingWater = true
+			task.wait(1)
+			vKFlowingWater = false
+		end
+	end)
+	
 	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
 		if c.Name == "ForceField" then
 
@@ -401,9 +411,10 @@ local function vKCode()
 			local hf = Character:FindFirstChild("HunterFists")
 
 			if hf == nil then return end		
-
+			if not vKFlowingWater then return end
+			
 			task.spawn(function()
-				task.wait(1.2)
+				task.wait(1.3)
 				oldPos = HumanoidRootPart.CFrame
 
 				if not vKProceed then return end
@@ -447,7 +458,7 @@ local function forceAutoRotateCode()
 	if not Character:FindFirstChild("Ragdoll") then
 		Humanoid.AutoRotate = true
 	end
-	
+
 	forceAutoRotateConnection = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
 		if not Character:FindFirstChild("Ragdoll") then
 			Humanoid.AutoRotate = true
