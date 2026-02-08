@@ -146,11 +146,19 @@ local canStartVK = false
 local vKEnabled = false
 
 local oldSelectedAnim = nil
-local selectedAnim = nil
+local currentTb = nil -- if multiselection is disabled
 
 -- FUNCTIONS
 
-local function createExtraButton(name, parent) -- idk if i will work futurely on No Toggle version. it only works with toggle btw
+local function createExtraButton(name, parent, multiSelection, code) -- idk if i will work futurely on No Toggle version. it only works with toggle btw
+	for _, v in pairs(parent:GetChildren()) do
+		if v:IsA("TextButton") then
+			if v.Text == name then
+				return
+			end
+		end
+	end
+
 	local tb = Instance.new("TextButton")
 	tb.Parent = parent
 	tb.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
@@ -168,21 +176,26 @@ local function createExtraButton(name, parent) -- idk if i will work futurely on
 		if tb:GetAttribute("activated") then
 			tb:SetAttribute("activated", false) -- disabled
 			tb.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-			selectedAnim = nil
+
+			if code then code(tb) end
 		else
-			if selectedAnim == nil then
-				selectedAnim = tb
+			if multiSelection then
+				tb:SetAttribute("activated", true)
+				tb.BackgroundColor3 = Color3.fromRGB(0, 163, 166)
+			else
+				if currentTb then
+					if currentTb ~= tb then
+						currentTb:SetAttribute("activated", false)
+						currentTb.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
+					end
+				end
+
+				currentTb = tb
+				currentTb:SetAttribute("activated", true)
+				currentTb.BackgroundColor3 = Color3.fromRGB(0, 163, 166)
 			end
 
-			if selectedAnim ~= nil then
-				oldSelectedAnim = selectedAnim
-				oldSelectedAnim:SetAttribute("activated", false)
-				oldSelectedAnim.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-				selectedAnim = tb
-			end
-
-			selectedAnim:SetAttribute("activated", true) -- enabled
-			selectedAnim.BackgroundColor3 = Color3.fromRGB(0, 163, 166)
+			if code then code(tb) end
 		end
 	end)
 end
@@ -698,100 +711,7 @@ createModButton("KJ Flexworks Anim", "Miscellaneous", false, function()
 	end)
 end)
 
--- Fake Anims
-
-local fakeAnimConnection
-
 local Extras = ScreenGui:WaitForChild("Extras")
-
-local AnimIDS = {
-	["Normal Punch"] = 10468665991,
-	["Consecutive Punches"] = 10466974800,
-	["Shove"] = 10471336737,
-	["Uppercut"] = 12510170988,
-	["Saitama Ult"] = 12447707844,
-	["Table Flip"] = 11365563255,
-	["Serious Punch"] = 12983333733,
-	["Omni Directional Punch"] = 13927612951,
-	["Mosquito"] = 140164642047188,
-
-	-- Garou
-	["Garou Ult"] = 12342141464,
-	["Flowing Water"] = 12272894215,
-	["Lethal Whirlwind Stream"] = 12296882427,
-	["Hunter's Grasp"] = 12307656616,
-	["Prey's Peril"] = 12351854556,
-	["Water Stream Cutting Fist"] = 12460977270,
-	["The Final Hunt"] = 12463072679,
-	["Rock Splitting Fist"] = 14057231976,
-	["Crushed Rock"] = 13630786846,
-
-	-- Genos
-	["Genos Ult"] = 12772543293,
-	["Machine Gun Blows"] = 12534735382,
-	["Thunder Kick"] = 14721837245,
-	["Speedblitz Dropkick"] = 12832505612,
-	["Flamewave Cannon"] = 13083332742,
-	["Incinerate"] = 13146710762,
-
-	-- Sonic
-	["Sonic Ult"] = 13499771836,
-	["Flash Strike"] = 13309500827,
-	["Whirlwind Kick"] = 13294790250,
-	["Explosive Shuriken"] = 13501296372,
-	["Carnage"] = 13723174078,
-
-	-- KJ
-	["KJ Ult 1"] = 17140902079
-}
-
-
-local currentTrack = nil
-local oldTrack = nil
-
-local activeKjSounds = {}
-
-local function playAnim()
-	local anim = Instance.new("Animation")
-	anim.AnimationId = "rbxassetid://" .. AnimIDS[selectedAnim.Text]
-	currentTrack = Animator:LoadAnimation(anim)
-	currentTrack.Priority = Enum.AnimationPriority.Action4
-
-	cp:PreloadAsync({anim})
-
-	if oldTrack then
-		oldTrack:Stop()
-	end
-
-	oldTrack = currentTrack
-
-	currentTrack:Play()
-end
-
-createModButton("Fake Anims", "Miscellaneous", true, function(isEnabled)
-	if isEnabled then
-		fakeAnimConnection = uis.InputBegan:Connect(function(i, p)
-			if p then return end
-
-			if i.KeyCode == Enum.KeyCode.X then
-				if selectedAnim ~= nil then
-					playAnim()
-				end
-			end
-		end)
-	else
-		if fakeAnimConnection then
-			fakeAnimConnection:Disconnect()
-			fakeAnimConnection = nil
-		end
-	end
-
-end, function() -- extra part
-	local location = Extras["Fake Anims"]
-	for i, v in pairs(AnimIDS) do
-		createExtraButton(i, location)
-	end
-end)
 
 -- Damage Visualizer
 local dmgVisualizerConns = {}
@@ -992,7 +912,7 @@ createModButton("M1 Reset", "Combat", true, function(isEnabled)
 				conn:Disconnect()
 			end
 		end
-		
+
 		m1ResetConns = {}
 	end
 end)
@@ -1013,12 +933,12 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 				conn:Disconnect()
 			end
 		end
-		
+
 		m1ResetConns = {}
-		
+
 		m1ResetCode()
 	end
-	
+
 	if cMesh ~= nil then
 		korbloxHeadlessCode("wonderifixedit")
 	end
