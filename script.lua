@@ -5,6 +5,7 @@ if game.PlaceId ~= placeId then return end
 -- Services
 local uis = game:GetService("UserInputService")
 local cp = game:GetService("ContentProvider")
+local rs = game:GetService("RunService")
 
 -- Player Variables
 local Player = game.Players.LocalPlayer
@@ -367,11 +368,11 @@ createMenu("Player", .3)
 createMenu("Visuals", .5)
 createMenu("Miscellaneous", .7)
 
--- M1 Reset
-local m1Connection
-createModButton("M1 Reset", "Combat", true, function(isEnabled)
+-- TP Backwards
+local tpBackwardsConnection
+createModButton("TP Backwards", "Player", true, function(isEnabled)
 	if isEnabled then
-		m1Connection = uis.InputBegan:Connect(function(i, p)
+		tpBackwardsConnection = uis.InputBegan:Connect(function(i, p)
 			if p then return end
 
 			if i.KeyCode == Enum.KeyCode.R then
@@ -382,9 +383,9 @@ createModButton("M1 Reset", "Combat", true, function(isEnabled)
 				end
 			end
 		end)
-	elseif m1Connection then
-		m1Connection:Disconnect()
-		m1Connection = nil
+	elseif tpBackwardsConnection then
+		tpBackwardsConnection:Disconnect()
+		tpBackwardsConnection = nil
 	end
 end)
 
@@ -919,7 +920,7 @@ local function korbloxHeadlessCode()
 			mesh.MeshType = Enum.MeshType.FileMesh
 		end
 	end
-	
+
 	for _, mesh in pairs(Character:GetChildren()) do
 		if mesh:IsA("CharacterMesh") and mesh.BodyPart == Enum.BodyPart.RightLeg then
 			cMesh = mesh
@@ -945,15 +946,54 @@ createModButton("Korblox + Headless", "Visuals", true, function(isEnabled)
 		cMesh.MeshId = oldChrMesh.MeshId
 		cMesh.OverlayTextureId = oldChrMesh.OverlayTextureId
 		cMesh:Destroy()
-		
+
 		cMesh = nil
-		
+
 		local head = Character:FindFirstChild("Head")
 		local hMesh = head:FindFirstChild("fHeadless")
-		
+
 		if hMesh then
 			hMesh:Destroy()
 		end
+	end
+end)
+
+-- M1 Reset
+
+local m1ResetConns = {}
+
+local function m1ResetCode()
+	m1ResetConns[#m1ResetConns+1] = HumanoidRootPart.ChildAdded:Connect(function(c)
+		if c.Name == "dodgevelocity" then
+			m1ResetConns[#m1ResetConns+1] = rs.Heartbeat:Connect(function()
+				if c then
+					c.Name = "velocity"
+				end
+			end)
+		end
+	end)
+
+	m1ResetConns[#m1ResetConns+1] = HumanoidRootPart.ChildRemoved:Connect(function(c)
+		if c.Name == "velocity" then
+			if m1ResetConns then
+				m1ResetConns:Disconnect()
+				m1ResetConns = nil
+			end
+		end
+	end)
+end
+
+createModButton("M1 Reset", "Combat", true, function(isEnabled)
+	if isEnabled then
+		m1ResetCode()
+	elseif m1ResetConns then
+		for _, conn in pairs(m1ResetConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+		
+		m1ResetConns = {}
 	end
 end)
 
@@ -966,12 +1006,23 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-	
+
+	if m1ResetConns then
+		for _, conn in pairs(m1ResetConns) do
+			if conn then
+				conn:Disconnect()
+			end
+		end
+		
+		m1ResetConns = {}
+		
+		m1ResetCode()
+	end
 	
 	if cMesh ~= nil then
 		korbloxHeadlessCode("wonderifixedit")
 	end
-	
+
 	if antiDeathCounterConnection then
 		antiDCCode()
 	end
