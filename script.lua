@@ -917,6 +917,19 @@ createModButton("M1 Reset", "Combat", true, function(isEnabled)
 	end
 end)
 
+-- Always Can Jump
+local alwaysJumpEnabled = false
+
+createModButton("Always Can Jump", "Player", true, function(isEnabled)
+	if isEnabled then
+		alwaysJumpEnabled = true
+		Humanoid.UseJumpPower = false
+	else
+		alwaysJumpEnabled = false
+		Humanoid.UseJumpPower = true
+	end
+end)
+
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
@@ -926,7 +939,11 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-
+	
+	if alwaysJumpEnabled then
+		Humanoid.UseJumpPower = false
+	end
+	
 	if m1ResetConns then
 		for _, conn in pairs(m1ResetConns) do
 			if conn then
