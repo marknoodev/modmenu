@@ -930,6 +930,37 @@ createModButton("Always Can Jump", "Player", true, function(isEnabled)
 	end
 end)
 
+-- Auto Mambo
+local tcs = game:GetService("TextChatService")
+local channel = tcs.TextChannels.RBXGeneral
+
+local mamboEnabled = false
+local lastMambo = 0
+
+local function mamboCode()
+	local randomTime = math.random(30, 60)
+	local now = tick()
+	lastMambo = now
+	
+	task.wait(randomTime)
+	
+	if now ~= lastMambo then return end
+	if not mamboEnabled then return end
+	
+	channel:SendAsync("mambo")
+	
+	mamboCode()
+end
+
+createModButton("Auto Mambo", "Miscellaneous", true, function(isEnabled)
+	if isEnabled then
+		mamboEnabled = true
+		mamboCode()
+	else
+		mamboEnabled = false
+	end
+end)
+
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
@@ -939,11 +970,11 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-	
+
 	if alwaysJumpEnabled then
 		Humanoid.UseJumpPower = false
 	end
-	
+
 	if m1ResetConns then
 		for _, conn in pairs(m1ResetConns) do
 			if conn then
