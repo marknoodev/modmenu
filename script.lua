@@ -931,6 +931,11 @@ createModButton("Always Can Jump", "Player", true, function(isEnabled)
 end)
 
 -- Auto Mambo
+local mamboSound = Instance.new("Sound", workspace)
+mamboSound.Name = "Mambo"
+mamboSound.SoundId = "rbxassetid://104825100882122"
+mamboSound.Volume = .3
+
 local tcs = game:GetService("TextChatService")
 local channel = tcs.TextChannels.RBXGeneral
 
@@ -941,14 +946,20 @@ local function mamboCode()
 	local randomTime = math.random(30, 60)
 	local now = tick()
 	lastMambo = now
-	
+
 	task.wait(randomTime)
-	
+
 	if now ~= lastMambo then return end
 	if not mamboEnabled then return end
 	
-	channel:SendAsync("mambo")
+	local mambo = workspace:FindFirstChild("Mambo")
 	
+	if mambo then
+		mambo:Play()
+	end
+	
+	channel:SendAsync("mambo")
+
 	mamboCode()
 end
 
