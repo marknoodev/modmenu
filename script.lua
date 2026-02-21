@@ -758,7 +758,7 @@ local function dmgVisualizerCode()
 	for _, chr in pairs(Live:GetChildren()) do
 		if chr ~= Character then
 			local plr = game.Players:GetPlayerFromCharacter(chr)
-			if not plr then continue end -- continue just reset the actual round of for loop
+			if not plr then continue end -- "continue" just resets the actual round of for loop
 
 			dmgVisualizerCode2(chr)
 
@@ -769,10 +769,14 @@ local function dmgVisualizerCode()
 	end
 end
 
+local dmgVisualizer = false
 createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
 	if isEnabled then
+		dmgVisualizer = true
 		dmgVisualizerCode()
 	elseif dmgVisualizerConns then
+		dmgVisualizer = false
+		
 		for _, conn in pairs(dmgVisualizerConns) do
 			if conn then
 				conn:Disconnect()
@@ -951,13 +955,13 @@ local function mamboCode()
 
 	if now ~= lastMambo then return end
 	if not mamboEnabled then return end
-	
+
 	local mambo = workspace:FindFirstChild("Mambo")
-	
+
 	if mambo then
 		mambo:Play()
 	end
-	
+
 	channel:SendAsync("mambo")
 
 	mamboCode()
@@ -1029,7 +1033,7 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 
 	kjSetup(char)
 
-	if dmgVisualizerConns then
+	if dmgVisualizer then
 		for _, conn in pairs(dmgVisualizerConns) do
 			if conn then
 				conn:Disconnect()
