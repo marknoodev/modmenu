@@ -776,7 +776,7 @@ createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
 		dmgVisualizerCode()
 	elseif dmgVisualizerConns then
 		dmgVisualizer = false
-		
+
 		for _, conn in pairs(dmgVisualizerConns) do
 			if conn then
 				conn:Disconnect()
@@ -976,6 +976,50 @@ createModButton("Auto Mambo", "Miscellaneous", true, function(isEnabled)
 	end
 end)
 
+-- TriggerBot
+local triggerBotConn
+local vim = game:GetService("VirtualInputManager")
+
+local TRIGGER_DIST = 7.5
+
+local function triggerBotCode()
+	triggerBotConn = rs.Heartbeat:Connect(function()
+		local closestChar = nil
+		local closestDist = math.huge
+
+		for _, chr in pairs(Live:GetChildren()) do
+			local hrp = chr:FindFirstChild("HumanoidRootPart")
+			if hrp and chr ~= Character then
+				local dist = (HumanoidRootPart.Position - hrp.Position).Magnitude
+				if dist < closestDist then
+					closestDist = dist
+					closestChar = chr
+				end
+			end
+		end
+
+		if closestDist <= TRIGGER_DIST and closestChar then
+			vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+			vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+		end
+	end)
+end
+
+createModButton("Trigger Bot", "Combat", true, function(isEnabled)
+	if isEnabled then
+		triggerBotCode()
+	elseif triggerBotConn then
+		triggerBotConn:Disconnect()
+		triggerBotConn = nil
+	end
+end)
+
+-- Avaliables
+--("Combat")
+--("Player")
+--("Visuals")
+--("Miscellaneous")
+
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
@@ -985,7 +1029,11 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-
+	
+	if triggerBotConn ~= nil then
+		triggerBotCode()
+	end
+	
 	if alwaysJumpEnabled then
 		Humanoid.UseJumpPower = false
 	end
