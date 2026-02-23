@@ -339,7 +339,6 @@ local function setupMoves()
 				movesConnector[#movesConnector+1] = button.DescendantAdded:Connect(function(desc)
 					if desc.Name == "Cooldown" then
 						movesTbl[button.Name] = true
-						print(button.Name .. " is on cooldown")
 
 						if button.Name == "1" and movesTbl["1"] == true then
 							task.spawn(function() -- only flowing water can void kill
@@ -354,7 +353,6 @@ local function setupMoves()
 				movesConnector[#movesConnector+1] = button.DescendantRemoving:Connect(function(desc)
 					if desc.Name == "Cooldown" then
 						movesTbl[button.Name] = false
-						print(button.Name .. " is ready")
 					end
 				end)
 			end
@@ -1050,14 +1048,14 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-	
+
 	if emoteWhileDashing then
 		emoteWhileDashConn:Disconnect()
 		emoteWhileDashConn = nil
-		
+
 		emoteWhileDashCode()
 	end
-	
+
 	if triggerBotConn ~= nil then
 		triggerBotCode()
 	end
