@@ -449,7 +449,7 @@ local function vKCode()
 	end)
 end
 
-createModButton("Void Kill", "Combat", true, function(isEnabled)
+createModButton("Void Kill [Bugged]", "Combat", true, function(isEnabled)
 	if isEnabled then
 		vKEnabled = true
 		vKCode()
@@ -1014,6 +1014,27 @@ createModButton("Trigger Bot", "Combat", true, function(isEnabled)
 	end
 end)
 
+-- Emote While Dashing
+local emoteWhileDashConn	
+
+local function emoteWhileDashCode()
+	emoteWhileDashConn = Character:GetAttributeChangedSignal("_JustDashed"):Connect(function()
+		Character:SetAttribute("_JustDashed", 0)
+	end)
+end
+
+local emoteWhileDashing = false
+
+createModButton("Emote While Side Dash", "Player", true, function(isEnabled)
+	if isEnabled then
+		emoteWhileDashing = true
+		emoteWhileDashCode()
+	elseif emoteWhileDashConn then
+		emoteWhileDashing = false
+		emoteWhileDashConn:Disconnect()
+	end
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1030,10 +1051,17 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 
 	-- Reloads the previous ' ON ' options
 	
+	if emoteWhileDashing then
+		emoteWhileDashConn:Disconnect()
+		emoteWhileDashConn = nil
+		
+		emoteWhileDashCode()
+	end
+	
 	if triggerBotConn ~= nil then
 		triggerBotCode()
 	end
-	
+
 	if alwaysJumpEnabled then
 		Humanoid.UseJumpPower = false
 	end
