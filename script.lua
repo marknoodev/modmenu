@@ -1033,6 +1033,36 @@ createModButton("Emote While Side Dash", "Player", true, function(isEnabled)
 	end
 end)
 
+-- Hide Block Anim
+local BlockIDS = {
+	10470389827,
+	13380778193,
+	13935548552
+}
+
+local hideBlockAnimConn = nil
+
+local function HideBlockAnimCode()
+	hideBlockAnimConn = Animator.AnimationPlayed:Connect(function(track)
+		for _, id in pairs(BlockIDS) do
+			if track.Animation.AnimationId == "rbxassetid://" .. id then
+				track:Stop()
+			end
+		end
+	end)
+end
+
+createModButton("Hide Block Anim", "Visuals", true, function(isEnabled)
+	if isEnabled then
+		HideBlockAnimCode()
+	else
+		if hideBlockAnimConn ~= nil then
+			hideBlockAnimConn:Disconnect()
+			hideBlockAnimConn = nil
+		end
+	end
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1048,7 +1078,14 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-
+	
+	if hideBlockAnimConn ~= nil then
+		hideBlockAnimConn:Disconnect()
+		hideBlockAnimConn = nil
+		
+		HideBlockAnimCode()
+	end
+	
 	if emoteWhileDashing then
 		emoteWhileDashConn:Disconnect()
 		emoteWhileDashConn = nil
