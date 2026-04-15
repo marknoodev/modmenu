@@ -2,10 +2,26 @@
 local placeId = 10449761463
 if game.PlaceId ~= placeId then return end
 
+-- Rejoin Exec Feature
+local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport) or (getgenv and getgenv().queue_on_teleport)
+
+local AutoReload = true
+
+if queueteleport then
+	game.Players.LocalPlayer.OnTeleport:Connect(function(state)
+		if AutoReload then
+			queueteleport([[
+                loadstring(game:HttpGet('https://raw.githubusercontent.com/marknoodev/modmenu/refs/heads/main/script.lua'))()
+            ]])
+		end
+	end)
+end
+
 -- Services
 local uis = game:GetService("UserInputService")
 local cp = game:GetService("ContentProvider")
 local rs = game:GetService("RunService")
+local telService = game:GetService("TeleportService")
 
 -- Player Variables
 local Player = game.Players.LocalPlayer
@@ -117,6 +133,9 @@ function createMenu(name, sizeX)
 end
 
 -- VARIABLES
+local placeId = game.PlaceId
+local jobId = game.JobId
+
 local cam = workspace.CurrentCamera
 local Live = workspace:WaitForChild("Live")
 
@@ -1063,6 +1082,16 @@ createModButton("Hide Block Anim", "Visuals", true, function(isEnabled)
 	end
 end)
 
+-- Jerk Off
+createModButton("Jerk Off", "Miscellaneous", false, function()
+	loadstring(game:HttpGet("https://pastefy.app/wa3v2Vgm/raw"))("Spider Script")
+end)
+
+-- Rejoin
+createModButton("Rejoin Server", "Miscellaneous", false, function()	
+	telService:TeleportToPlaceInstance(placeId, jobId, Player)
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1078,14 +1107,14 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-	
+
 	if hideBlockAnimConn ~= nil then
 		hideBlockAnimConn:Disconnect()
 		hideBlockAnimConn = nil
-		
+
 		HideBlockAnimCode()
 	end
-	
+
 	if emoteWhileDashing then
 		emoteWhileDashConn:Disconnect()
 		emoteWhileDashConn = nil
