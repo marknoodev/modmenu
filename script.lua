@@ -1092,6 +1092,32 @@ createModButton("Rejoin Server", "Miscellaneous", false, function()
 	telService:TeleportToPlaceInstance(placeId, jobId, Player)
 end)
 
+-- Lay
+local layConn
+
+local function layCode()
+	layConn = uis.InputBegan:Connect(function(i, p)
+		if p then return end
+		if i.KeyCode == Enum.KeyCode.Z then
+			Humanoid.Sit = true
+			task.wait(0.1)
+			Humanoid.RootPart.CFrame = Humanoid.RootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
+			for _, v in ipairs(Humanoid:GetPlayingAnimationTracks()) do
+				v:Stop()
+			end
+		end
+	end)
+end
+
+createModButton("Lay", "Miscellaneous", true, function(isEnabled)
+	if isEnabled then
+		layCode()
+	elseif layConn then
+		layConn:Disconnect()
+		layConn = nil
+	end
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1107,7 +1133,13 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-
+	if layConn ~= nil then
+		layConn:Disconnect()
+		layConn = nil
+		
+		layCode()
+	end
+	
 	if hideBlockAnimConn ~= nil then
 		hideBlockAnimConn:Disconnect()
 		hideBlockAnimConn = nil
