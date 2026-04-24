@@ -1118,6 +1118,27 @@ createModButton("Lay", "Miscellaneous", true, function(isEnabled)
 	end
 end)
 
+-- Remove Emote Freeze
+local remoteEmoteFreezeConn
+
+local function remoteEmoteFreezeCode()
+	remoteEmoteFreezeConn = Character.ChildAdded:Connect(function(child)
+		if child.Name == "DoingEmote" and child:IsA("Accessory") then
+			local freeze = Character:WaitForChild("Freeze")
+			freeze:Destroy()
+		end
+	end)
+end
+
+createModButton("Remove Emote Freeze", "Player", true, function(isEnabled)
+	if isEnabled then
+		remoteEmoteFreezeCode()
+	elseif remoteEmoteFreezeConn then
+		remoteEmoteFreezeConn:Disconnect()
+		remoteEmoteFreezeConn = nil
+	end
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1133,13 +1154,20 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
+	if remoteEmoteFreezeConn ~= nil then
+		remoteEmoteFreezeConn:Disconnect()
+		remoteEmoteFreezeConn = nil
+		
+		remoteEmoteFreezeCode()
+	end
+	
 	if layConn ~= nil then
 		layConn:Disconnect()
 		layConn = nil
-		
+
 		layCode()
 	end
-	
+
 	if hideBlockAnimConn ~= nil then
 		hideBlockAnimConn:Disconnect()
 		hideBlockAnimConn = nil
