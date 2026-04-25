@@ -1139,6 +1139,66 @@ createModButton("Remove Emote Freeze", "Player", true, function(isEnabled)
 	end
 end)
 
+-- Freeze Mid Air
+local freezeMidAirConns = {}
+
+local thread = 0
+
+local function freezeMidAirCode()
+	freezeMidAirConns[#freezeMidAirConns+1] = uis.InputBegan:Connect(function(i, p)
+		if p then return end
+
+		if i.KeyCode == Enum.KeyCode.R then
+			thread = thread + tick()
+			local oldThread = thread
+
+			Humanoid.Sit = true
+
+			task.wait(0.1)
+
+			if oldThread ~= thread then return end
+
+			HumanoidRootPart.CFrame = HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
+			HumanoidRootPart.CFrame = HumanoidRootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
+
+			task.spawn(function()
+				for _, v in ipairs(Humanoid:GetPlayingAnimationTracks()) do
+					v:Stop()
+				end	
+			end)
+
+			task.wait(.07)
+
+			if oldThread ~= thread then return end
+
+			HumanoidRootPart.Anchored = true
+		end
+	end)
+
+	freezeMidAirConns[#freezeMidAirConns+1] = uis.InputEnded:Connect(function(i, p)
+		if p then return end
+
+		if i.KeyCode == Enum.KeyCode.R then
+			thread = thread + tick()
+
+			HumanoidRootPart.Anchored = false
+			Humanoid.Sit = false
+		end
+	end)
+end
+
+createModButton("Freeze Mid Air", "Player", true, function(isEnabled)
+	if isEnabled then
+		freezeMidAirCode()
+	elseif freezeMidAirConns then
+		for _, v in ipairs(freezeMidAirConns) do
+			v:Disconnect()
+		end
+		
+		freezeMidAirConns = {}
+	end
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1154,13 +1214,23 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
+	if freezeMidAirConns then
+		for _, v in ipairs(freezeMidAirConns) do
+			v:Disconnect()
+		end
+		
+		freezeMidAirConns = {}
+		
+		freezeMidAirCode()
+	end
+	
 	if remoteEmoteFreezeConn ~= nil then
 		remoteEmoteFreezeConn:Disconnect()
 		remoteEmoteFreezeConn = nil
-		
+
 		remoteEmoteFreezeCode()
 	end
-	
+
 	if layConn ~= nil then
 		layConn:Disconnect()
 		layConn = nil
