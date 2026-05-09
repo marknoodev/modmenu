@@ -916,9 +916,10 @@ local function m1ResetCode()
 
 	m1ResetConns[#m1ResetConns+1] = HumanoidRootPart.ChildRemoved:Connect(function(c)
 		if c.Name == "velocity" then
-			if m1ResetConns then
-				m1ResetConns:Disconnect()
-				m1ResetConns = nil
+			for _, conn in pairs(m1ResetConns) do
+				if conn then
+					conn:Disconnect()
+				end
 			end
 		end
 	end)
@@ -1194,8 +1195,37 @@ createModButton("Freeze Mid Air", "Player", true, function(isEnabled)
 		for _, v in ipairs(freezeMidAirConns) do
 			v:Disconnect()
 		end
-		
+
 		freezeMidAirConns = {}
+	end
+end)
+
+-- Disable Player Collision
+local disablePlrColisionConn
+
+local function disablePlrColisionCode()
+	disablePlrColisionConn = rs.Heartbeat:Connect(function()
+		for _, v in pairs(Character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CollisionGroup = "nocol2" 
+			end
+		end
+	end)
+end
+
+createModButton("Disable Player Collision", "Player", true, function(isEnabled)
+	if isEnabled then
+		disablePlrColisionCode()
+	elseif disablePlrColisionConn then
+		disablePlrColisionConn:Disconnect()
+		disablePlrColisionConn = nil
+		
+		-- reverts
+		for _, v in pairs(Character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CollisionGroup = "playercol" 
+			end
+		end
 	end
 end)
 
@@ -1214,16 +1244,23 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
+	if disablePlrColisionConn then
+		disablePlrColisionConn:Disconnect()
+		disablePlrColisionConn = nil
+		
+		disablePlrColisionCode()
+	end
+	
 	if freezeMidAirConns then
 		for _, v in ipairs(freezeMidAirConns) do
 			v:Disconnect()
 		end
-		
+
 		freezeMidAirConns = {}
-		
+
 		freezeMidAirCode()
 	end
-	
+
 	if remoteEmoteFreezeConn ~= nil then
 		remoteEmoteFreezeConn:Disconnect()
 		remoteEmoteFreezeConn = nil
