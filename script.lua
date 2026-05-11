@@ -916,10 +916,8 @@ local function m1ResetCode()
 
 	m1ResetConns[#m1ResetConns+1] = HumanoidRootPart.ChildRemoved:Connect(function(c)
 		if c.Name == "velocity" then
-			for _, conn in pairs(m1ResetConns) do
-				if conn then
-					conn:Disconnect()
-				end
+			if m1ResetConns then
+				m1ResetConns:Disconnect()
 			end
 		end
 	end)
@@ -1219,7 +1217,7 @@ createModButton("Disable Player Collision", "Player", true, function(isEnabled)
 	elseif disablePlrColisionConn then
 		disablePlrColisionConn:Disconnect()
 		disablePlrColisionConn = nil
-		
+
 		-- reverts
 		for _, v in pairs(Character:GetDescendants()) do
 			if v:IsA("BasePart") then
@@ -1247,10 +1245,10 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	if disablePlrColisionConn then
 		disablePlrColisionConn:Disconnect()
 		disablePlrColisionConn = nil
-		
+
 		disablePlrColisionCode()
 	end
-	
+
 	if freezeMidAirConns then
 		for _, v in ipairs(freezeMidAirConns) do
 			v:Disconnect()
