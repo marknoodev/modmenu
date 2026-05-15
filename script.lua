@@ -1250,10 +1250,14 @@ local function invisibleTableFlipCode()
 			end)
 
 			local TIME = 3.5
-
+			
+			task.spawn(function()
+				task.wait(TIME - .2)
+				
+				oldPos = HumanoidRootPart.CFrame
+			end)
+			
 			task.wait(TIME)
-
-			oldPos = HumanoidRootPart.CFrame
 
 			HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)
 
@@ -1317,7 +1321,7 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 			mod.code()
 		end
 	end
-	
+
 	-- Bools like this are just manually placed
 	if alwaysJumpEnabled then
 		Humanoid.UseJumpPower = false
