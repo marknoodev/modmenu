@@ -340,15 +340,26 @@ local function createModButton(name, category, toggle, code, extraCode)
 	end
 end
 
+local function isModActive(connTable)
+	if typeof(connTable) ~= "table" then return false end
+	return next(connTable) ~= nil -- next returns nil if table is empty
+end
+
 local function connDisconnect(conn)
 	if typeof(conn) == "table" then
 		for _, c in pairs(conn) do
-			c:Disconnect()
+			if c then
+				c:Disconnect()
+			end
 		end
-		conn = {}
+		for k in pairs(conn) do
+			conn[k] = nil
+		end
 	elseif typeof(conn) == "RBXScriptConnection" then
-		conn:Disconnect()
-		conn = nil
+		if conn then
+			conn:Disconnect()
+			conn = nil
+		end
 	end
 end
 
@@ -1277,25 +1288,49 @@ end)
 --("Visuals")
 --("Miscellaneous")
 
+local modsToReconnect = {
+	{conns = invisibleTableFlipConns, code = invisibleTableFlipCode},
+	{conns = disablePlrColisionConn, code = disablePlrColisionCode},
+	{conns = freezeMidAirConns, code = freezeMidAirCode},
+	{conns = remoteEmoteFreezeConn, code = remoteEmoteFreezeCode},
+	{conns = layConn, code = layCode},
+	{conns = hideBlockAnimConn, code = HideBlockAnimCode},
+	{conns = emoteWhileDashConn, code = emoteWhileDashCode},
+	{conns = triggerBotConn, code = triggerBotCode},
+	{conns = m1ResetConns, code = m1ResetCode},
+	{conns = antiDeathCounterConnection, code = antiDCCode},
+	{conns = vKConns, code = vKCode},
+	{conns = dmgVisualizerConns, code = dmgVisualizerCode},
+}
+
 local function connReconnect(conn, code)
 	if typeof(conn) == "table" then
+		local wasEnabled = false
+		
 		for _, v in pairs(conn) do
 			if v then
+				wasEnabled = true
 				v:Disconnect()
 			end
 		end
 
 		conn = {}
 
-		if #conn > 0 then
+		if wasEnabled then
 			if code then code() end
 		end
 
 	elseif typeof(conn) == "RBXScriptConnection" then
+		local wasEnabled = false
+		
+		if conn then
+			wasEnabled = true
+		end
+		
 		conn:Disconnect()
 		conn = nil
 
-		if conn then
+		if wasEnabled then
 			if code then code() end
 		end
 	end
@@ -1310,20 +1345,11 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-	connReconnect(invisibleTableFlipConns, invisibleTableFlipCode)
-	connReconnect(disablePlrColisionConn, disablePlrColisionCode)
-	connReconnect(freezeMidAirConns, freezeMidAirCode)
-	connReconnect(remoteEmoteFreezeConn, remoteEmoteFreezeCode)
-	connReconnect(layConn, layCode)
-	connReconnect(hideBlockAnimConn, HideBlockAnimCode)
-	connReconnect(emoteWhileDashing, emoteWhileDashCode)
-	connReconnect(triggerBotConn, triggerBotCode)
-	connReconnect(m1ResetConns, m1ResetCode)
-	connReconnect(antiDeathCounterConnection, antiDCCode)
-	connReconnect(forceAutoRotateConnection, forceAutoRotateCode)
-	connReconnect(antiBlockDebuffConnection, antiBlockDebuffCode)
-	connReconnect(vKConns, vKCode)
-	connReconnect(dmgVisualizerConns, dmgVisualizerCode)
+	for _, mod in pairs(modsToReconnect) do
+		if isModActive(mod.conns) then
+			mod.code()
+		end
+	end
 	
 	-- Bools like this are just manually placed
 	if alwaysJumpEnabled then
