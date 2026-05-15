@@ -1252,7 +1252,7 @@ local function invisibleTableFlipCode()
 			local TIME = 3.5
 			
 			task.spawn(function()
-				task.wait(TIME - .2)
+				task.wait(TIME - .3)
 				
 				oldPos = HumanoidRootPart.CFrame
 			end)
