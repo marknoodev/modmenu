@@ -1303,39 +1303,6 @@ local modsToReconnect = {
 	{conns = dmgVisualizerConns, code = dmgVisualizerCode},
 }
 
-local function connReconnect(conn, code)
-	if typeof(conn) == "table" then
-		local wasEnabled = false
-		
-		for _, v in pairs(conn) do
-			if v then
-				wasEnabled = true
-				v:Disconnect()
-			end
-		end
-
-		conn = {}
-
-		if wasEnabled then
-			if code then code() end
-		end
-
-	elseif typeof(conn) == "RBXScriptConnection" then
-		local wasEnabled = false
-		
-		if conn then
-			wasEnabled = true
-		end
-		
-		conn:Disconnect()
-		conn = nil
-
-		if wasEnabled then
-			if code then code() end
-		end
-	end
-end
-
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
