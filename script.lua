@@ -340,6 +340,18 @@ local function createModButton(name, category, toggle, code, extraCode)
 	end
 end
 
+local function connDisconnect(conn)
+	if typeof(conn) == "table" then
+		for _, c in pairs(conn) do
+			c:Disconnect()
+		end
+		conn = {}
+	elseif typeof(conn) == "RBXScriptConnection" then
+		conn:Disconnect()
+		conn = nil
+	end
+end
+
 local function cleanupConnections()
 	for _, connection in ipairs(movesConnector) do
 		connection:Disconnect()
@@ -413,9 +425,8 @@ createModButton("TP Backwards", "Player", true, function(isEnabled)
 				end
 			end
 		end)
-	elseif tpBackwardsConnection then
-		tpBackwardsConnection:Disconnect()
-		tpBackwardsConnection = nil
+	else
+		connDisconnect(tpBackwardsConnection)
 	end
 end)
 
@@ -472,12 +483,7 @@ createModButton("Void Kill [Bugged]", "Combat", true, function(isEnabled)
 		vKCode()
 	elseif vKConns then
 		vKEnabled = false
-		for _, conn in pairs(vKConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-		vKConns = {}
+		connDisconnect(vKConns)
 	end
 end)
 
@@ -500,9 +506,8 @@ end
 createModButton("Force AutoRotate", "Player", true, function(isEnabled)
 	if isEnabled then
 		forceAutoRotateCode()
-	elseif forceAutoRotateConnection then
-		forceAutoRotateConnection:Disconnect()
-		forceAutoRotateConnection = nil
+	else
+		connDisconnect(forceAutoRotateConnection)
 	end
 end)
 
@@ -525,15 +530,14 @@ end
 createModButton("Anti Block Debuff", "Player", true, function(isEnabled)
 	if isEnabled then
 		antiBlockDebuffCode()
-	elseif antiBlockDebuffConnection then
-		antiBlockDebuffConnection:Disconnect()
-		antiBlockDebuffConnection = nil
+	else
+		connDisconnect(antiBlockDebuffConnection)
 	end
 end)
 
 -- No Cutscene
+local noCutsceneConns = {}
 
-local cloneCamConnection
 local function cloneCam()
 	local newCam = Instance.new("Camera")
 	newCam.CameraSubject = Humanoid
@@ -542,22 +546,20 @@ local function cloneCam()
 
 	cam = newCam
 
-	cloneCamConnection = newCam:GetPropertyChangedSignal("CameraType"):Connect(function()
+	noCutsceneConns.noCutsceneConns1 = newCam:GetPropertyChangedSignal("CameraType"):Connect(function()
 		newCam:Destroy()
 		cloneCam()
 	end)
 end
 
-local noCutsceneConnection
 createModButton("No Cutscene", "Miscellaneous", true, function(isEnabled)
 	if isEnabled then
-		noCutsceneConnection = cam:GetPropertyChangedSignal("CameraType"):Connect(function()
+		noCutsceneConns.noCutsceneConns2 = cam:GetPropertyChangedSignal("CameraType"):Connect(function()
 			cam:Destroy()
 			cloneCam()
 		end)
-	elseif noCutsceneConnection then
-		noCutsceneConnection:Disconnect()
-		noCutsceneConnection = nil
+	else
+		connDisconnect(noCutsceneConns)
 	end
 end)
 
@@ -633,13 +635,7 @@ createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
 			end
 		end
 	else
-		for _, conn in pairs(cVConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
-		cVConns = {}
+		connDisconnect(cVConns)
 
 		for _, v in pairs(Live:GetChildren()) do
 			if v.Head:FindFirstChild("CounterV") then
@@ -794,13 +790,7 @@ createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
 	elseif dmgVisualizerConns then
 		dmgVisualizer = false
 
-		for _, conn in pairs(dmgVisualizerConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
-		dmgVisualizerConns = {}
+		connDisconnect(dmgVisualizerConns)
 
 		for _, v in pairs(Live:GetChildren()) do
 			if v:FindFirstChild("ImHighRn") then
@@ -838,9 +828,8 @@ end
 createModButton("Anti Death Counter", "Player", true, function(isEnabled)
 	if isEnabled then
 		antiDCCode()
-	elseif antiDeathCounterConnection then
-		antiDeathCounterConnection:Disconnect()
-		antiDeathCounterConnection = nil
+	else
+		connDisconnect(antiDeathCounterConnection)
 	end
 end)
 
@@ -926,14 +915,8 @@ end
 createModButton("M1 Reset", "Combat", true, function(isEnabled)
 	if isEnabled then
 		m1ResetCode()
-	elseif m1ResetConns then
-		for _, conn in pairs(m1ResetConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
-		m1ResetConns = {}
+	else
+		connDisconnect(m1ResetConns)
 	end
 end)
 
@@ -1024,9 +1007,8 @@ end
 createModButton("Trigger Bot", "Combat", true, function(isEnabled)
 	if isEnabled then
 		triggerBotCode()
-	elseif triggerBotConn then
-		triggerBotConn:Disconnect()
-		triggerBotConn = nil
+	else
+		connDisconnect(triggerBotConn)
 	end
 end)
 
@@ -1045,9 +1027,9 @@ createModButton("Emote While Side Dash", "Player", true, function(isEnabled)
 	if isEnabled then
 		emoteWhileDashing = true
 		emoteWhileDashCode()
-	elseif emoteWhileDashConn then
+	else
 		emoteWhileDashing = false
-		emoteWhileDashConn:Disconnect()
+		connDisconnect(emoteWhileDashConn)
 	end
 end)
 
@@ -1074,10 +1056,7 @@ createModButton("Hide Block Anim", "Visuals", true, function(isEnabled)
 	if isEnabled then
 		HideBlockAnimCode()
 	else
-		if hideBlockAnimConn ~= nil then
-			hideBlockAnimConn:Disconnect()
-			hideBlockAnimConn = nil
-		end
+		connDisconnect(hideBlockAnimConn)
 	end
 end)
 
@@ -1111,9 +1090,8 @@ end
 createModButton("Lay", "Miscellaneous", true, function(isEnabled)
 	if isEnabled then
 		layCode()
-	elseif layConn then
-		layConn:Disconnect()
-		layConn = nil
+	else
+		connDisconnect(layConn)
 	end
 end)
 
@@ -1132,9 +1110,8 @@ end
 createModButton("Remove Emote Freeze", "Player", true, function(isEnabled)
 	if isEnabled then
 		remoteEmoteFreezeCode()
-	elseif remoteEmoteFreezeConn then
-		remoteEmoteFreezeConn:Disconnect()
-		remoteEmoteFreezeConn = nil
+	else
+		connDisconnect(remoteEmoteFreezeConn)
 	end
 end)
 
@@ -1189,12 +1166,8 @@ end
 createModButton("Freeze Mid Air", "Player", true, function(isEnabled)
 	if isEnabled then
 		freezeMidAirCode()
-	elseif freezeMidAirConns then
-		for _, v in ipairs(freezeMidAirConns) do
-			v:Disconnect()
-		end
-
-		freezeMidAirConns = {}
+	else
+		connDisconnect(freezeMidAirConns)
 	end
 end)
 
@@ -1214,9 +1187,8 @@ end
 createModButton("Disable Player Collision", "Player", true, function(isEnabled)
 	if isEnabled then
 		disablePlrColisionCode()
-	elseif disablePlrColisionConn then
-		disablePlrColisionConn:Disconnect()
-		disablePlrColisionConn = nil
+	else
+		connDisconnect(disablePlrColisionConn)
 
 		-- reverts
 		for _, v in pairs(Character:GetDescendants()) do
@@ -1233,6 +1205,30 @@ end)
 --("Visuals")
 --("Miscellaneous")
 
+local function connReconnect(conn, code)
+	if typeof(conn) == "table" then
+		for _, v in pairs(conn) do
+			if v then
+				v:Disconnect()
+			end
+		end
+
+		conn = {}
+		
+		if #conn > 0 then
+			if code then code() end
+		end
+		
+	elseif typeof(conn) == "RBXScriptConnection" then
+		conn:Disconnect()
+		conn = nil
+		
+		if conn then
+			if code then code() end
+		end
+	end
+end
+
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	task.wait(.1)
 
@@ -1242,109 +1238,29 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
-	if disablePlrColisionConn then
-		disablePlrColisionConn:Disconnect()
-		disablePlrColisionConn = nil
+	connReconnect(disablePlrColisionConn, disablePlrColisionCode)
+	connReconnect(freezeMidAirConns, freezeMidAirCode)
+	connReconnect(remoteEmoteFreezeConn, remoteEmoteFreezeCode)
+	connReconnect(layConn, layCode)
+	connReconnect(hideBlockAnimConn, HideBlockAnimCode)
+	connReconnect(emoteWhileDashing, emoteWhileDashCode)
+	connReconnect(triggerBotConn, triggerBotCode)
+	connReconnect(m1ResetConns, m1ResetCode)
+	connReconnect(antiDeathCounterConnection, antiDCCode)
+	connReconnect(forceAutoRotateConnection, forceAutoRotateCode)
+	connReconnect(antiBlockDebuffConnection, antiBlockDebuffCode)
+	connReconnect(vKConns, vKCode)
+	connReconnect(dmgVisualizerConns, dmgVisualizerCode)
 
-		disablePlrColisionCode()
-	end
-
-	if freezeMidAirConns then
-		for _, v in ipairs(freezeMidAirConns) do
-			v:Disconnect()
-		end
-
-		freezeMidAirConns = {}
-
-		freezeMidAirCode()
-	end
-
-	if remoteEmoteFreezeConn ~= nil then
-		remoteEmoteFreezeConn:Disconnect()
-		remoteEmoteFreezeConn = nil
-
-		remoteEmoteFreezeCode()
-	end
-
-	if layConn ~= nil then
-		layConn:Disconnect()
-		layConn = nil
-
-		layCode()
-	end
-
-	if hideBlockAnimConn ~= nil then
-		hideBlockAnimConn:Disconnect()
-		hideBlockAnimConn = nil
-
-		HideBlockAnimCode()
-	end
-
-	if emoteWhileDashing then
-		emoteWhileDashConn:Disconnect()
-		emoteWhileDashConn = nil
-
-		emoteWhileDashCode()
-	end
-
-	if triggerBotConn ~= nil then
-		triggerBotCode()
-	end
-
+	-- Bools like this are just manually placed
 	if alwaysJumpEnabled then
 		Humanoid.UseJumpPower = false
-	end
-
-	if m1ResetConns then
-		for _, conn in pairs(m1ResetConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
-		m1ResetConns = {}
-
-		m1ResetCode()
 	end
 
 	if cMesh ~= nil then
 		korbloxHeadlessCode("wonderifixedit")
 	end
 
-	if antiDeathCounterConnection then
-		antiDCCode()
-	end
-
-	if forceAutoRotateConnection then -- it means it is on
-		forceAutoRotateCode()
-	end
-
-	if antiBlockDebuffConnection then
-		antiBlockDebuffCode()
-	end
-
-	if vKConns then
-		for _, conn in pairs(vKConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
-		vKConns = {}
-		vKCode()
-	end
-
-	setupMoves()
-
 	kjSetup(char)
-
-	if dmgVisualizer then
-		for _, conn in pairs(dmgVisualizerConns) do
-			if conn then
-				conn:Disconnect()
-			end
-		end
-
-		dmgVisualizerCode()
-	end
+	setupMoves()
 end)
