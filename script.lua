@@ -1199,6 +1199,78 @@ createModButton("Disable Player Collision", "Player", true, function(isEnabled)
 	end
 end)
 
+-- Invisible Table Flip
+local invisibleTableFlipConns = {}
+
+local function invisibleTableFlipCode()
+	invisibleTableFlipConns.invisibleTableFlipConns1 = Character.ChildAdded:Connect(function(child)
+		if child.Name == "Table Flip" then
+			local list = {
+				"AntiMove",
+				"Freeze",
+				"HeavyBody",
+				"NoRotate"
+			}
+
+			local oldPos = nil
+
+			local totalDeleted = 0
+
+			task.spawn(function()
+				while totalDeleted ~= #list do
+					for _, v in pairs(Character:GetChildren()) do
+						for _, v2 in pairs(list) do
+							if v.Name == v2 then
+								v:Destroy()
+								totalDeleted += 1
+							end
+						end
+					end
+
+					task.wait(.1)
+				end
+			end)
+
+			task.spawn(function()
+				for i = 1, 20 do
+					HumanoidRootPart.CustomPhysicalProperties = nil
+					task.wait(.1)
+				end
+			end)
+
+			local TIME = 3.5
+
+			task.wait(TIME)
+
+			oldPos = HumanoidRootPart.CFrame
+
+			HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)
+
+			task.wait(.5)
+
+			HumanoidRootPart.CFrame = oldPos
+		end
+	end)
+
+	local tableflipID = "rbxassetid://11365563255"
+
+	invisibleTableFlipConns.invisibleTableFlipConns2 = Animator.AnimationPlayed:Connect(function(track)
+		local id = track.Animation.AnimationId
+
+		if id == tableflipID then
+			track:Stop()
+		end
+	end)
+end
+
+createModButton("Invisible Table Flip", "Visuals", true, function(isEnabled)
+	if isEnabled then
+		invisibleTableFlipCode()
+	else
+		connDisconnect(invisibleTableFlipConns)
+	end
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1214,15 +1286,15 @@ local function connReconnect(conn, code)
 		end
 
 		conn = {}
-		
+
 		if #conn > 0 then
 			if code then code() end
 		end
-		
+
 	elseif typeof(conn) == "RBXScriptConnection" then
 		conn:Disconnect()
 		conn = nil
-		
+
 		if conn then
 			if code then code() end
 		end
@@ -1238,6 +1310,7 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	Animator = Humanoid:WaitForChild("Animator")
 
 	-- Reloads the previous ' ON ' options
+	connReconnect(invisibleTableFlipConns, invisibleTableFlipCode)
 	connReconnect(disablePlrColisionConn, disablePlrColisionCode)
 	connReconnect(freezeMidAirConns, freezeMidAirCode)
 	connReconnect(remoteEmoteFreezeConn, remoteEmoteFreezeCode)
@@ -1251,7 +1324,7 @@ Player.CharacterAdded:Connect(function(char) -- my chrAdded
 	connReconnect(antiBlockDebuffConnection, antiBlockDebuffCode)
 	connReconnect(vKConns, vKCode)
 	connReconnect(dmgVisualizerConns, dmgVisualizerCode)
-
+	
 	-- Bools like this are just manually placed
 	if alwaysJumpEnabled then
 		Humanoid.UseJumpPower = false
