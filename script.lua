@@ -1250,13 +1250,13 @@ local function invisibleTableFlipCode()
 			end)
 
 			local TIME = 3.5
-			
+
 			task.spawn(function()
 				task.wait(TIME - .3)
-				
+
 				oldPos = HumanoidRootPart.CFrame
 			end)
-			
+
 			task.wait(TIME)
 
 			HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)
@@ -1286,6 +1286,27 @@ createModButton("Invisible Table Flip", "Visuals", true, function(isEnabled)
 	end
 end)
 
+-- Float While Semi Ragdolled
+local floatWhileSemiRagdolledConns = {}
+
+local function floatWhileSemiRagdolledCode()
+	floatWhileSemiRagdolledConns.floatWhileSemiRagdolledConns1 = Character.ChildAdded:Connect(function(child)
+		if child.Name == "BeingLaunched" then -- start
+			humanoid.HipHeight = 4
+		elseif child.Name == "LaunchEnded" then -- end
+			humanoid.HipHeight = 0
+		end
+	end)
+end
+
+createModButton("Float While Semi Ragdolled", "Player", true, function(isEnabled)
+	if isEnabled then
+		floatWhileSemiRagdolledCode()
+	else
+		connDisconnect(floatWhileSemiRagdolledConns)
+	end
+end)
+
 -- Avaliables
 --("Combat")
 --("Player")
@@ -1305,6 +1326,7 @@ local modsToReconnect = {
 	{conns = antiDeathCounterConnection, code = antiDCCode},
 	{conns = vKConns, code = vKCode},
 	{conns = dmgVisualizerConns, code = dmgVisualizerCode},
+	{conns = floatWhileSemiRagdolledConns, code = floatWhileSemiRagdolledCode},
 }
 
 Player.CharacterAdded:Connect(function(char) -- my chrAdded
