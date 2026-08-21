@@ -1,9 +1,20 @@
+--// SERVICES \\--
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 
+--// PLAYER \\--
+local Player = game.Players.LocalPlayer
+local Character = Player.Character or Player.CharacterAdded:Wait()
+local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+local Humanoid : Humanoid = Character:FindFirstChild("Humanoid")
+
+local PlayerGui = Player.PlayerGui
+local Backpack = Player.Backpack
+
+--// VARIABLES \\--
 local Remotes = ReplicatedStorage:FindFirstChild("Remotes")
 local CommF_ : RemoteFunction = Remotes:FindFirstChild("CommF_")
 
@@ -11,13 +22,6 @@ local Modules = ReplicatedStorage:FindFirstChild("Modules")
 
 local NPCs = workspace:FindFirstChild("NPCs")
 local Enemies = workspace:FindFirstChild("Enemies")
-
-local Player = game.Players.LocalPlayer
-local PlayerGui = Player.PlayerGui
-local Backpack = Player.Backpack
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
-local Humanoid : Humanoid = Character:FindFirstChild("Humanoid")
 
 local Level = Player.Data.Level
 local Money = Player.Data.Beli
@@ -33,6 +37,7 @@ local RegisterHit = Net["RE/RegisterHit"]
 
 local PRIORITY = ""
 local Tween : Tween = nil
+local TWEEN_SPEED = 265
 
 local function AddConnection(conn, tbl)
 	if conn then
@@ -196,6 +201,22 @@ local function AttackNearEnemies(enabled)
 	end)
 end
 
+function magnitude(x, y) -- must be cframe or vector3 (recommended: vector3)
+	local v1 = x
+	local v2 = y
+	
+	-- if cframe, then it becomes a vector3
+	if typeof(x) == "CFrame" then
+		v1 = x.Position
+	end
+	
+	if typeof(y) == "CFrame" then
+		v2 = y.Position
+	end
+	
+	return (v1 - v2).Magnitude
+end
+
 -- Tween thingo
 function TweenPosTo(target, onCompleted)
 	local usedSubTarget = false
@@ -218,13 +239,7 @@ function TweenPosTo(target, onCompleted)
 	end
 
 	local Distance = (target.Position - HumanoidRootPart.Position).Magnitude
-	local Speed = 300
-
-	if Distance < 1000 then
-		Speed = 265
-	else
-		Speed = 250
-	end
+	local Speed = 265
 
 	local info = TweenInfo.new(
 		Distance / Speed,
@@ -312,15 +327,48 @@ local function PullNPCs(controllerVariable, specifiedNPC)
 	end)
 end
 
+function timeTravelled(from, to, speed)
+	
+	if typeof(from) == "CFrame" then
+		from = from.Position
+	end
+	
+	if typeof(to) == "CFrame" then
+		to = to.Position
+	end
+	
+	return (from - to).Magnitude / speed
+end
+
+-- requestEntrance CFrames
+local Vector3Entrances = {
+	-- SEA 1
+	{
+		-- Fishman Island
+		Vector3.new(61163.8515625, 11.6796875, 1819.7841796875),
+
+		-- Outside Fishman Island
+		Vector3.new(3864.8515625, 6.6796875, -1926.7841796875),
+
+		-- Lower Skylands (but not the floor)
+		Vector3.new(-4607.8227539063, 872.54248046875, -1667.5568847656),
+
+		-- Upper Skylands
+		Vector3.new(-7894.6176757813, 5547.1416015625, -380.29119873047)
+	},
+	
+	
+}
+
 local _Noclip = false
 local FuncsUsingNoclip = 0
 
 local function Noclip(option)
 	if option then
 		FuncsUsingNoclip += 1
-		
+
 		if FuncsUsingNoclip ~= 1 then return end -- prevent from multiples 'whiles' being created :v
-		
+
 		task.spawn(function()
 			while _Noclip do
 				task.wait()
@@ -333,7 +381,7 @@ local function Noclip(option)
 		end)
 	else
 		FuncsUsingNoclip -= 1
-		
+
 		if FuncsUsingNoclip == 0 then
 			_Noclip = false
 
@@ -364,9 +412,9 @@ local HasElectric = false
 local function AutoElectric(enabled)
 	if enabled then
 		_AutoElectric = true
-		
+
 		Noclip(true)
-		
+
 		while _AutoElectric do
 			task.wait()
 
@@ -390,13 +438,13 @@ local function AutoElectric(enabled)
 
 			CommF_:InvokeServer("AbandonQuest")
 			PRIORITY = ""
-			
+
 			Noclip(false)
 		end
 	else
 		_AutoElectric = false
 		Noclip(false)
-		
+
 		if PRIORITY == "AutoElectric" then
 			PRIORITY = ""
 			CancelTween()
@@ -647,7 +695,7 @@ local function AutoLevelFarm(enabled)
 
 	if enabled then
 		Noclip(true)
-		
+
 		task.wait()
 
 		sethiddenproperty(Player, "SimulationRadius", math.huge)
@@ -965,15 +1013,55 @@ local function AutoLevelFarm(enabled)
 					PRIORITY = "DoingQuest"
 
 					Data = GetQuestData()
-
+					
 					if Data then
-						local dist = (HumanoidRootPart.Position - Data.QuestArea.Position).Magnitude
-
+						local dist = magnitude(HumanoidRootPart.Position, Data.QuestArea)
+						
 						-- resets the AlreadyTPed var thingooo lolo :ooo
 						if lastNPCName ~= nil and lastNPCName ~= Data.NPCName then
 							AlreadyTPed = false
 						end
-
+						
+						lastNPCName = Data.NPCName
+						
+						if not AlreadyTPed then
+							if not Vector3Entrances[CurrentWorld()] then continue end
+							
+							AlreadyTPed = true
+							
+							local hrpPos = HumanoidRootPart.Position
+							
+							local TweenTimeTravelled = timeTravelled(hrpPos, Data.QuestArea, 265)
+							local TPTimeTravelled = nil
+							
+							local bestPos = nil
+							local lastTimeTravelled = nil
+							
+							for _, _vector3 in ipairs(Vector3Entrances[CurrentWorld()]) do
+								if not bestPos then
+									bestPos = _vector3
+									lastTimeTravelled = timeTravelled(_vector3, Data.QuestArea, 265)
+									continue
+								end
+								
+								local currentTravel = timeTravelled(_vector3, Data.QuestArea, 265)
+								
+								-- we're analysing SECONDS, btw. just look at the timeTravelled func
+								if currentTravel < lastTimeTravelled then
+									bestPos = _vector3
+									lastTimeTravelled = currentTravel
+									
+									TPTimeTravelled = lastTimeTravelled
+								end
+							end
+							
+							if TPTimeTravelled <= TweenTimeTravelled then
+								CommF_:InvokeServer("requestEntrance", bestPos)
+								continue
+							end
+						end
+						
+						--[[
 						if Data.SpecialFunc ~= nil and dist > 3000 and not AlreadyTPed then
 							lastNPCName = Data.NPCName
 							AlreadyTPed = true
@@ -987,6 +1075,7 @@ local function AutoLevelFarm(enabled)
 							PRIORITY = ""
 							continue
 						end
+						]]
 
 						TweenPosTo(Data.QuestArea * CFrame.new(0, STUDS_ABOVE_NPCS, 0), DoQuest)
 					end
