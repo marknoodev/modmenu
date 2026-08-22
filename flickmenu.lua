@@ -211,30 +211,34 @@ end
 local ESPConns = {}
 
 function ESP(enabled)
+	local defaultESPName = "Teegnomish (referencia ao saco btw >.<)"
+	
 	if enabled then
 		local function Effect(char)
 			if char == game.Players.LocalPlayer.Character then return end
 			
 			for _, obj in char:GetChildren() do
 				if obj:IsA("Highlight") then
-					obj:Destroy()
+					if obj.Name ~= defaultESPName then
+						obj:Destroy()
+					elseif obj.Name == defaultESPName then
+						return
+					end
 				end
 			end
 			
 			local highlight = Instance.new("Highlight", char)
-			highlight.Name = "SpecificName_99RIKJ"
+			highlight.Name = defaultESPName
 			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		end
-
-		AddConnection(workspace.ChildAdded:Connect(function(child)
-			if child:IsA("Model") and child:FindFirstChild("Humanoid") then
-				Effect(child)
-			end
-		end), ESPConns)
-
-		for _, plr in game.Players:GetPlayers() do
-			if plr.Character then
-				Effect(plr.Character)
+		
+		while next(ESPConns) do
+			task.wait(.1)
+			
+			for _, plr in game.Players:GetPlayers() do
+				if plr.Character then
+					Effect(plr.Character)
+				end
 			end
 		end
 	else
@@ -242,8 +246,8 @@ function ESP(enabled)
 
 		for _, plr in game.Players:GetPlayers() do
 			if plr.Character then
-				if plr.Character:FindFirstChild("SpecificName_99RIKJ") then
-					plr.Character.SpecificName_99RIKJ:Destroy()
+				if plr.Character:FindFirstChild(defaultESPName) then
+					plr.Character[defaultESPName]:Destroy()
 				end
 			end
 		end
