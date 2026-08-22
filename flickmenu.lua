@@ -28,6 +28,8 @@ local AimbotConns = {}
 
 local foundChar = nil
 
+local AimbotRadiusValue = 200
+
 local function setAimbotGui()
 	if AimbotGui then return end
 
@@ -37,7 +39,7 @@ local function setAimbotGui()
 
 	AimbotCircle = Instance.new("Frame")
 	AimbotCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	AimbotCircle.Size = UDim2.fromOffset(200, 200)
+	AimbotCircle.Size = UDim2.fromOffset(AimbotRadiusValue, AimbotRadiusValue)
 	AimbotCircle.Position = UDim2.fromScale(0.5, 0.5)
 	AimbotCircle.AnchorPoint = Vector2.new(0.5, 0.5)
 	AimbotCircle.BackgroundTransparency = 1
@@ -210,7 +212,13 @@ function ESP(enabled)
 	if enabled then
 		local function Effect(char)
 			if char == game.Players.LocalPlayer.Character then return end
-
+			
+			for _, obj in char:GetChildren() do
+				if obj:IsA("Highlight") then
+					obj:Destroy()
+				end
+			end
+			
 			local highlight = Instance.new("Highlight", char)
 			highlight.Name = "SpecificName_99RIKJ"
 			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
@@ -267,9 +275,32 @@ local Player_Tab = Window:Tab({
 	Icon = "user"
 })
 
-local Aimbot_Toggle = Player_Tab:Toggle({
+local Aimbot_Section = Player_Tab:Section({
+	Title = "Aimbot Config",
+	Box = true,
+	BoxBorder = true,
+	Opened = true
+})
+
+local Aimbot_Toggle = Aimbot_Section:Toggle({
 	Title = "Aimbot",
 	Callback = function(state)
 		Aimbot(state)
+	end,
+})
+
+local Aimbot_Radius = Aimbot_Section:Slider({
+	Title = "Radius Size",
+	Value = {
+		Min = 50,
+		Max = 500,
+		Default = 200
+	},
+	Callback = function(value)
+		AimbotRadiusValue = value
+
+		if AimbotGui then
+			AimbotCircle.Size = UDim2.fromOffset(AimbotRadiusValue, AimbotRadiusValue)
+		end
 	end,
 })
