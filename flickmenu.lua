@@ -54,77 +54,99 @@ local function setAimbotGui()
 end
 
 local function HasLineOfSight(character)
-    if not character then return false end
-    
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    local head = character:FindFirstChild("Head")
-    
-    if not hrp and not head then
-        return false
-    end
-    
-    local targetParts = {}
-    if head then table.insert(targetParts, head) end
-    if hrp then table.insert(targetParts, hrp) end
-    
-    for _, part in ipairs(targetParts) do
-        local origin = Camera.CFrame.Position
-        local direction = (part.Position - origin).Unit * (part.Position - origin).Magnitude
-        
-        local params = RaycastParams.new()
-        params.FilterType = Enum.RaycastFilterType.Exclude
-        params.FilterDescendantsInstances = {
-            Player.Character,
-            part
-        }
-        
-        local result = workspace:Raycast(origin, direction, params)
-        
-        if not result then
-            return true, part
-        end
-        
-        if result.Instance and result.Instance:IsDescendantOf(character) then
-            return true, part
-        end
-    end
-    
-    return false, nil
+	if not character then return false end
+
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	local head = character:FindFirstChild("Head")
+
+	if not hrp and not head then
+		return false
+	end
+
+	local targetParts = {}
+	if head then table.insert(targetParts, head) end
+	if hrp then table.insert(targetParts, hrp) end
+
+	for _, part in ipairs(targetParts) do
+		local origin = Camera.CFrame.Position
+		local direction = (part.Position - origin).Unit * (part.Position - origin).Magnitude
+
+		local params = RaycastParams.new()
+		params.FilterType = Enum.RaycastFilterType.Exclude
+		params.FilterDescendantsInstances = {
+			Player.Character,
+			part
+		}
+
+		local result = workspace:Raycast(origin, direction, params)
+
+		if not result then
+			return true, part
+		end
+
+		if result.Instance and result.Instance:IsDescendantOf(character) then
+			return true, part
+		end
+	end
+
+	return false, nil
 end
 
 local function findTargetInCircle()
 	if not AimbotCircle then return nil end
 
-	local circleCenter = AimbotCircle.AbsolutePosition + AimbotCircle.AbsoluteSize / 2
+	local circleCenter = Camera.ViewportSize / 2
 	local radius = AimbotCircle.AbsoluteSize.X / 2
+
 	local closestDistance = radius
 	local closestTarget = nil
 
 	for _, player in game.Players:GetPlayers() do
-		if player ~= Player then
-			local character = player.Character
-			if not character then continue end
+		if player == Player then continue end
 
-			local hrp = character:FindFirstChild("HumanoidRootPart")
-			local hum = character:FindFirstChild("Humanoid")
+		local character = player.Character
+		if not character then continue end
 
-			if hrp and hum then
-				if hum.Health <= 0 then continue end
+		local hrp = character:FindFirstChild("HumanoidRootPart")
+		local hum = character:FindFirstChild("Humanoid")
 
-				local screenPos, visible = Camera:WorldToViewportPoint(hrp.Position)
+		if not hrp or not hum or hum.Health <= 0 then continue end
 
-				if visible then
-					if not HasLineOfSight(character) then continue end
-					
-					local playerPos = Vector2.new(screenPos.X, screenPos.Y)
-					local distance = (playerPos - circleCenter).Magnitude
+		local bodyParts = {}
 
-					if distance <= radius and distance < closestDistance then
-						closestDistance = distance
-						closestTarget = character
+		for _, part in ipairs(character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				table.insert(bodyParts, part)
+			end
+		end
+
+		local bestDist = math.huge
+		local partFound = false
+
+		for _, part in ipairs(bodyParts) do
+			local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+
+			if onScreen and screenPos.Z > 0 then
+				local partPos2D = Vector2.new(screenPos.X, screenPos.Y)
+				local distFromCenter = (partPos2D - circleCenter).Magnitude
+
+				if distFromCenter <= radius then
+					local hasLOS = HasLineOfSight(character)
+
+					if hasLOS then
+						partFound = true
+
+						if distFromCenter < bestDist then
+							bestDist = distFromCenter
+						end
 					end
 				end
 			end
+		end
+
+		if partFound and bestDist < closestDistance then
+			closestDistance = bestDist
+			closestTarget = character
 		end
 	end
 
@@ -150,10 +172,10 @@ function Aimbot(enabled)
 				end
 			end
 		end), AimbotConns)
-		
+
 		AddConnection(UserInputService.InputBegan:Connect(function(i, p)
 			if p then return end
-			
+
 			if i.UserInputType == Enum.UserInputType.MouseButton1 then
 				if foundChar then
 					local hrp = foundChar:FindFirstChild("HumanoidRootPart")
@@ -170,11 +192,11 @@ function Aimbot(enabled)
 		end), AimbotConns)
 	else
 		ClearConnections(AimbotConns)
-		
+
 		if AimbotGui then
 			AimbotGui:Destroy()
 		end
-		
+
 		AimbotGui = nil
 		AimbotCircle = nil
 
