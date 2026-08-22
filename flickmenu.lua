@@ -32,6 +32,7 @@ local function setAimbotGui()
 	if AimbotGui then return end
 
 	AimbotGui = Instance.new("ScreenGui")
+	AimbotGui.IgnoreGuiInset = true
 	AimbotGui.Parent = Player:WaitForChild("PlayerGui")
 
 	AimbotCircle = Instance.new("Frame")
