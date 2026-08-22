@@ -53,27 +53,42 @@ local function setAimbotGui()
 end
 
 local function HasLineOfSight(character)
-	local hrp = character:FindFirstChild("HumanoidRootPart")
-	if not hrp then
-		return false
-	end
-
-	local origin = Camera.CFrame.Position
-	local direction = hrp.Position - origin
-
-	local params = RaycastParams.new()
-	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = {
-		Player.Character,
-	}
-
-	local result = workspace:Raycast(origin, direction, params)
-
-	if not result then
-		return true
-	end
-
-	return result.Instance:IsDescendantOf(character)
+    if not character then return false end
+    
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local head = character:FindFirstChild("Head")
+    
+    if not hrp and not head then
+        return false
+    end
+    
+    local targetParts = {}
+    if head then table.insert(targetParts, head) end
+    if hrp then table.insert(targetParts, hrp) end
+    
+    for _, part in ipairs(targetParts) do
+        local origin = Camera.CFrame.Position
+        local direction = (part.Position - origin).Unit * (part.Position - origin).Magnitude
+        
+        local params = RaycastParams.new()
+        params.FilterType = Enum.RaycastFilterType.Exclude
+        params.FilterDescendantsInstances = {
+            Player.Character,
+            part
+        }
+        
+        local result = workspace:Raycast(origin, direction, params)
+        
+        if not result then
+            return true, part
+        end
+        
+        if result.Instance and result.Instance:IsDescendantOf(character) then
+            return true, part
+        end
+    end
+    
+    return false, nil
 end
 
 local function findTargetInCircle()
@@ -159,10 +174,10 @@ function Aimbot(enabled)
 			AimbotGui:Destroy()
 		end
 		
-		local AimbotGui = nil
-		local AimbotCircle = nil
+		AimbotGui = nil
+		AimbotCircle = nil
 
-		local foundChar = nil
+		foundChar = nil
 	end
 end
 
@@ -193,8 +208,10 @@ function ESP(enabled)
 		ClearConnections(ESPConns)
 
 		for _, plr in game.Players:GetPlayers() do
-			if plr.Character:FindFirstChild("SpecificName_99RIKJ") then
-				plr.Character.SpecificName_99RIKJ:Destroy()
+			if plr.Character then
+				if plr.Character:FindFirstChild("SpecificName_99RIKJ") then
+					plr.Character.SpecificName_99RIKJ:Destroy()
+				end
 			end
 		end
 	end
