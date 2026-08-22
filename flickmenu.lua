@@ -142,7 +142,8 @@ function Aimbot(enabled)
 				if foundChar then
 					local hrp = foundChar:FindFirstChild("HumanoidRootPart")
 					if hrp then
-						local targetPos = hrp.Position + Vector3.new(0, 1, 0)
+						local head = foundChar:FindFirstChild("Head")
+						local targetPos = head.Position
 						Camera.CFrame = CFrame.lookAt(
 							Camera.CFrame.Position,
 							targetPos
