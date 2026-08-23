@@ -43,12 +43,12 @@ local PreloadedIds = {}
 
 local function PreloadImage(Id)
 	if PreloadedIds[Id] then return end
-	
+
 	PreloadedIds[Id] = true
-	
+
 	local image = Instance.new("ImageLabel")
 	image.Image = "rbxassetid://" .. Id
-	
+
 	ContentProvider:PreloadAsync({image})
 end
 
@@ -57,12 +57,12 @@ local _AntiBlockDebuff = {}
 
 function AntiBlockDebuff(enabled)
 	ClearConnections(_AntiBlockDebuff)
-	
+
 	if enabled then
 		if Character:GetAttribute("Blocking") == nil then
 			Character:SetAttribute("Blocking", false)
 		end
-		
+
 		AddConnection(Character:GetAttributeChangedSignal("Blocking"):Connect(function()
 			if Character:GetAttribute("Blocking") == true then
 				Character:SetAttribute("Blocking", false)
@@ -75,12 +75,12 @@ local _ForceAutoRotate = {}
 
 function ForceAutoRotate(enabled)
 	ClearConnections(_ForceAutoRotate)
-	
+
 	if enabled then		
 		if not Character:FindFirstChild("Ragdoll") then
 			Humanoid.AutoRotate = true
 		end
-		
+
 		AddConnection(Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
 			if not Character:FindFirstChild("Ragdoll") then
 				Humanoid.AutoRotate = true
@@ -102,15 +102,15 @@ local _CounterVisualizer = {}
 
 function CounterVisualizer(enabled)
 	PreloadImage(137607954274376)
-	
+
 	for _, obj in pairs(workspace.Live:GetChildren()) do
 		if obj.Head:FindFirstChild("CounterV") then
 			obj.Head.CounterV:Destroy()
 		end
 	end
-	
+
 	ClearConnections(_CounterVisualizer)
-	
+
 	local function createDCImage(chr)
 		local BillboardGui = Instance.new("BillboardGui")
 		local ImageLabel = Instance.new("ImageLabel")
@@ -131,36 +131,36 @@ function CounterVisualizer(enabled)
 		ImageLabel.Size = UDim2.new(1, 0, 1, 0)
 		ImageLabel.Image = "rbxassetid://137607954274376"
 	end
-	
+
 	if enabled then
 		for _, chr in pairs(workspace.Live:GetChildren()) do
 			if game.Players:GetPlayerFromCharacter(chr) and chr ~= Character then
 				local plr = game.Players:GetPlayerFromCharacter(chr)
-				
+
 				if chr:FindFirstChild("Counter") then
 					createDCImage(chr)
 				end
-				
+
 				AddConnection(plr.CharacterAdded:Connect(function(chr)
 					AddConnection(chr.ChildAdded:Connect(function(obj)
 						if obj.Name == "Counter" and obj:IsA("Accessory") then
 							createDCImage(chr)
 						end
 					end), _CounterVisualizer)
-					
+
 					AddConnection(chr.ChildRemoved:Connect(function(obj)
 						if obj.Name == "Counter" and obj:IsA("Accessory") then
 							chr.Head:FindFirstChild("CounterV"):Destroy()
 						end
 					end), _CounterVisualizer)
 				end), _CounterVisualizer)
-				
+
 				AddConnection(chr.ChildAdded:Connect(function(obj)
 					if obj.Name == "Counter" and obj:IsA("Accessory") then
 						createDCImage(chr)
 					end
 				end), _CounterVisualizer)
-				
+
 				AddConnection(chr.ChildRemoved:Connect(function(obj)
 					if obj.Name == "Counter" and obj:IsA("Accessory") then
 						chr.Head:FindFirstChild("CounterV"):Destroy()
@@ -175,7 +175,7 @@ local _NoCutscene = {}
 
 function NoCutscene(enabled)
 	ClearConnections(_NoCutscene)
-	
+
 	local function CloneCam()
 		local NewCam = Instance.new("Camera")
 		NewCam.CameraSubject = Humanoid
@@ -183,19 +183,19 @@ function NoCutscene(enabled)
 		NewCam.Parent = workspace
 
 		Camera = NewCam
-		
+
 		AddConnection(NewCam:GetPropertyChangedSignal("CameraType"):Connect(function()
 			NewCam:Destroy()
 			CloneCam()
 		end), _NoCutscene)
 	end
-	
+
 	if enabled then
 		if Camera.CameraType == Enum.CameraType.Scriptable then
 			Camera:Destroy()
 			CloneCam()
 		end
-		
+
 		AddConnection(Camera:GetPropertyChangedSignal("CameraType"):Connect(function()
 			Camera:Destroy()
 			CloneCam()
@@ -207,7 +207,7 @@ local _AntiDC = {}
 
 function AntiDC(enabled)
 	ClearConnections(_AntiDC)
-	
+
 	if enabled then
 		for _, obj in Character:GetChildren() do
 			if obj.Name == "NoRotateUltimate" then
@@ -228,7 +228,7 @@ function AntiDC(enabled)
 				break
 			end
 		end
-		
+
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "NoRotateUltimate" then
 				local oldPos = HumanoidRootPart.CFrame
@@ -262,15 +262,15 @@ local cMesh = nil
 function KorbloxHeadless(enabled)
 	if enabled then
 		_KorbloxHeadless = true
-		
+
 		if Character:FindFirstChild("Head") then -- Headless
 			task.wait(.3)
-			
+
 			local mesh = Instance.new("SpecialMesh", Character.Head)
 			mesh.Name = "fHeadless"
 			mesh.MeshType = Enum.MeshType.FileMesh
 		end
-				
+
 		for _, mesh in pairs(Character:GetChildren()) do
 			if mesh:IsA("CharacterMesh") and mesh.BodyPart == Enum.BodyPart.RightLeg then
 				cMesh = mesh
@@ -290,7 +290,7 @@ function KorbloxHeadless(enabled)
 		end
 	else
 		_KorbloxHeadless = false
-		
+
 		if cMesh then
 			cMesh.MeshId = OldChrMesh.MeshId
 			cMesh.OverlayTextureId = OldChrMesh.OverlayTextureId
@@ -300,7 +300,7 @@ function KorbloxHeadless(enabled)
 		end
 
 		local head = Character:FindFirstChild("Head")
-		
+
 		if head then
 			local hMesh = head:FindFirstChild("fHeadless")
 
@@ -315,13 +315,13 @@ local _M1Reset = {}
 
 function M1Reset(enabled)
 	ClearConnections(_M1Reset)
-	
+
 	if enabled then
 		AddConnection(HumanoidRootPart.ChildAdded:Connect(function(obj)
 			if obj.Name == "dodgevelocity" then
 				while obj.Name == "dodgevelocity" do
 					task.wait()
-					
+
 					if obj then
 						obj.Name = "velocity"
 					end
@@ -335,13 +335,13 @@ local _HideBlockAnims = {}
 
 function HideBlockAnims(enabled)
 	ClearConnections(_HideBlockAnims)
-	
+
 	local BlockIDS = {
 		10470389827,
 		13380778193,
 		13935548552
 	}
-	
+
 	if enabled then
 		AddConnection(Animator.AnimationPlayed:Connect(function(track)
 			for _, id in pairs(BlockIDS) do
@@ -357,7 +357,7 @@ local _EmoteWhileDash = {}
 
 function EmoteWhileDash(enabled)
 	ClearConnections(_EmoteWhileDash)
-	
+
 	if enabled then
 		AddConnection(Character:GetAttributeChangedSignal("_JustDashed"):Connect(function()
 			Character:SetAttribute("_JustDashed", 0)
@@ -382,12 +382,18 @@ local _RemoveEmoteFreeze = {}
 
 function RemoveEmoteFreeze(enabled)
 	ClearConnections(_RemoveEmoteFreeze)
-	
+
 	if enabled then
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "DoingEmote" and obj:IsA("Accessory") then
 				local freeze = Character:WaitForChild("Freeze")
 				freeze:Destroy()
+			end
+		end), _RemoveEmoteFreeze)
+		
+		AddConnection(Animator.AnimationPlayed:Connect(function(track)
+			if track.Animation.AnimationId == "rbxassetid://7815618175" then
+				track:Stop()
 			end
 		end), _RemoveEmoteFreeze)
 	end
@@ -410,7 +416,7 @@ function FreezeMidAir(key)
 				ClearConnections(TempConn)
 			end
 		end), TempConn)
-		
+
 		thread = thread + tick()
 		local oldThread = thread
 
@@ -441,7 +447,7 @@ local _DisablePlayerCollision = {}
 
 function DisablePlayerCollision(enabled)
 	ClearConnections(_DisablePlayerCollision)
-	
+
 	if enabled then
 		AddConnection(RunService.Heartbeat:Connect(function()
 			for _, v in pairs(Character:GetDescendants()) do
@@ -463,7 +469,7 @@ local _InvisibleTableflip = {}
 
 function InvisibleTableflip(enabled)
 	ClearConnections(_InvisibleTableflip)
-	
+
 	if enabled then
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "Table Flip" then
@@ -532,7 +538,7 @@ local _FloatWhileSemiRagolled = {}
 
 function FloatWhileSemiRagolled(enabled)
 	ClearConnections(_FloatWhileSemiRagolled)
-	
+
 	if enabled then
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "BeingLaunched" then -- start
@@ -549,7 +555,7 @@ Player.CharacterAdded:Connect(function(char)
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-	
+
 	FloatWhileSemiRagolled(isEnabled(_FloatWhileSemiRagolled))
 	InvisibleTableflip(isEnabled(_InvisibleTableflip))
 	DisablePlayerCollision(isEnabled(_DisablePlayerCollision))
