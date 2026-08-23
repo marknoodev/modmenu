@@ -1,3 +1,5 @@
+repeat task.wait() until game:IsLoaded()
+
 local Ids = {
 	-- Blox Fruits
 	[2753915549] = function()
