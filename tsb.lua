@@ -385,25 +385,31 @@ function RemoveEmoteFreeze(enabled)
 
 	if enabled then
 		local TempConn = {}
-		
+
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "DoingEmote" and obj:IsA("Accessory") then
-				local freeze = Character:WaitForChild("Freeze")
-				freeze:Destroy()
-
+				if Character:FindFirstChild("DoingEmote") then
+					local freeze = Character:WaitForChild("Freeze")
+					freeze:Destroy()
+				end
+				
 				AddConnection(Animator.AnimationPlayed:Connect(function(track)
 					if track.Animation.AnimationId == "rbxassetid://7815618175" then
-						track:Stop()
+						if Character:FindFirstChild("DoingEmote") then
+							track:Stop()
+						end
 					end
 				end), TempConn)
-				
+
 				local currentTrack = Animator:GetPlayingAnimationTracks()[1]
 				if currentTrack.Animation.AnimationId == "rbxassetid://7815618175" then
-					currentTrack:Stop()
+					if Character:FindFirstChild("DoingEmote") then
+						currentTrack:Stop()
+					end
 				end
 			end
 		end), _RemoveEmoteFreeze)
-		
+
 		AddConnection(Character.ChildRemoved:Connect(function(obj)
 			if obj.Name == "DoingEmote" and obj:IsA("Accessory") then
 				ClearConnections(TempConn)
