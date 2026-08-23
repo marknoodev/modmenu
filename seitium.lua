@@ -1,3 +1,5 @@
+if not game:IsLoaded() then game.Loaded:Wait()
+
 local Ids = {
 	-- Blox Fruits
 	[2753915549] = function()
