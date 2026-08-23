@@ -211,34 +211,32 @@ local ESPConns = {}
 function ESP(enabled)
 	local defaultESPName = "Teegnomish (referencia ao saco btw >.<)"
 	
-	if enabled then
-		local function Effect(char)
-			if char == game.Players.LocalPlayer.Character then return end
-			
-			for _, obj in char:GetChildren() do
-				if obj:IsA("Highlight") then
-					if obj.Name ~= defaultESPName then
-						obj:Destroy()
-					elseif obj.Name == defaultESPName then
-						return
-					end
+	local function Effect(char)
+		if char == game.Players.LocalPlayer.Character then return end
+
+		for _, obj in char:GetChildren() do
+			if obj:IsA("Highlight") then
+				if obj.Name ~= defaultESPName then
+					obj:Destroy()
+				elseif obj.Name == defaultESPName then
+					return
 				end
 			end
-			
-			local highlight = Instance.new("Highlight", char)
-			highlight.Name = defaultESPName
-			highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 		end
-		
-		while next(ESPConns) do
-			task.wait(.1)
-			
+
+		local highlight = Instance.new("Highlight", char)
+		highlight.Name = defaultESPName
+		highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	end
+	
+	if enabled then
+		AddConnection(RunService.Heartbeat:Connect(function()
 			for _, plr in game.Players:GetPlayers() do
 				if plr.Character then
 					Effect(plr.Character)
 				end
 			end
-		end
+		end), ESPConns)
 	else
 		ClearConnections(ESPConns)
 
