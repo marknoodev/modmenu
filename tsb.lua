@@ -1,1358 +1,818 @@
--- Detector
-local placeId = 10449761463
-if game.PlaceId ~= placeId then return end
+local UserInputService = game:GetService("UserInputService")
+local ContentProvider = game:GetService("ContentProvider")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
 
--- Rejoin Exec Feature
-local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport) or (getgenv and getgenv().queue_on_teleport)
-
-local AutoReload = true
-
-if queueteleport then
-	game.Players.LocalPlayer.OnTeleport:Connect(function(state)
-		if AutoReload then
-			queueteleport([[
-                loadstring(game:HttpGet('https://raw.githubusercontent.com/marknoodev/modmenu/refs/heads/main/script.lua'))()
-            ]])
-		end
-	end)
-end
-
--- Services
-local uis = game:GetService("UserInputService")
-local cp = game:GetService("ContentProvider")
-local rs = game:GetService("RunService")
-local telService = game:GetService("TeleportService")
-
--- Player Variables
 local Player = game.Players.LocalPlayer
-
-if Player.PlayerGui:FindFirstChild("ZM V1.3") then return end
-
 local Character = Player.Character or Player.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local Humanoid = Character:FindFirstChild("Humanoid")
-local Animator = Humanoid:WaitForChild("Animator")
+local HumanoidRootPart : Part = Character:FindFirstChild("HumanoidRootPart")
+local Humanoid : Humanoid = Character:FindFirstChild("Humanoid")
 
--- Instances
-local ScreenGui = Instance.new("ScreenGui")
-local bg = Instance.new("Frame")
-local extraFolder = Instance.new("Folder")
+local Animator : Animator = Humanoid:WaitForChild("Animator")
 
-ScreenGui.Name = "ZM V1.3"
-ScreenGui.Enabled = false
-ScreenGui.Parent = Player:WaitForChild("PlayerGui")
-ScreenGui.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
-ScreenGui.ResetOnSpawn = false
+local Camera = workspace.CurrentCamera
 
-bg.Visible = false
-bg.Name = "bg"
-bg.Parent = ScreenGui
-bg.AnchorPoint = Vector2.new(0.5, 0.5)
-bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-bg.BackgroundTransparency = .7
-bg.BorderColor3 = Color3.fromRGB(0)
-bg.BorderSizePixel = 0
-bg.Position = UDim2.new(0.5, 0, 0.5, 0)
-bg.Size = UDim2.new(1, 0, 1, 0)
-
-extraFolder.Name = "Extras"
-extraFolder.Parent = ScreenGui
-
-function createMenu(name, sizeX)
-	local Frame = Instance.new("Frame")
-	local Name = Instance.new("TextLabel")
-	local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
-	local hider = Instance.new("TextButton")
-	local mods = Instance.new("Folder")
-	local holder = Instance.new("Frame")
-	local UIGridLayout = Instance.new("UIGridLayout")
-	local UIDragDetector = Instance.new("UIDragDetector")
-
-	-- Properties
-	Frame.Name = name
-	Frame.Parent = ScreenGui
-	Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	Frame.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-	Frame.BorderSizePixel = 0
-	Frame.Position = UDim2.new(sizeX, 0, 0.5, 0)
-	Frame.Size = UDim2.new(0.17, 0, 0.7, 0)
-
-	Name.Parent = Frame
-	Name.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-	Name.BorderSizePixel = 0
-	Name.Size = UDim2.new(1, 0, 0.1, 0)
-	Name.Font = Enum.Font.Sarpanch
-	Name.Text = name
-	Name.TextColor3 = Color3.fromRGB(255, 255, 255)
-	Name.TextScaled = true
-	Name.TextWrapped = true
-	UITextSizeConstraint.Parent = Name
-	UITextSizeConstraint.MaxTextSize = 23
-
-	hider.Name = "hider"
-	hider.Parent = Frame
-	hider.BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-	hider.BackgroundTransparency = 1
-	hider.Position = UDim2.new(0.79, 0, 0, 0)
-	hider.Size = UDim2.new(0.21, 0, 0.1, 0)
-	hider.ZIndex = 2
-	hider.AutoButtonColor = false
-	hider.Font = Enum.Font.Sarpanch
-	hider.Text = "-"
-	hider.TextColor3 = Color3.fromRGB(255, 255, 255)
-	hider.TextSize = 23
-
-	mods.Name = "mods"
-	mods.Parent = Frame
-	UIDragDetector.Parent = Frame
-
-	holder.Name = "holder"
-	holder.Parent = Frame
-	holder.BackgroundTransparency = 1
-	holder.Position = UDim2.new(0, 0, 0.1, 0)
-	holder.Size = UDim2.new(1, 0, 0.9, 0)
-
-	UIGridLayout.Parent = holder
-	UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	UIGridLayout.CellPadding = UDim2.new(0, 5, 0, 0)
-	UIGridLayout.CellSize = UDim2.new(1, 0, 0.07, 0)
-
-	-- Hider Func
-
-	hider.MouseButton1Down:Connect(function()
-		local transparent = Frame.BackgroundTransparency == 0
-		Frame.BackgroundTransparency = transparent and 1 or 0
-		UIDragDetector.Enabled = not transparent
-
-		for _, tbs in pairs(holder:GetChildren()) do
-			if tbs:IsA("TextButton") then
-				tbs.Visible = not transparent
-			end
-		end
-	end)
-end
-
--- VARIABLES
-local placeId = game.PlaceId
-local jobId = game.JobId
-
-local cam = workspace.CurrentCamera
-local Live = workspace:WaitForChild("Live")
-
-local sounds = {}
-
-local kjTrack
-
-local kjAnim = Instance.new("Animation")
-kjAnim.AnimationId = "rbxassetid://77727115892579"
-
-local vKConns = {}
-local vKProceed = true
-local oldPos
-
-local cVConns = {}
-
-local movesTbl = { -- false = ready
-	["1"] = false,
-	["2"] = false,
-	["3"] = false,
-	["4"] = false
-}
-
-local movesConnector = {}
-local canStartVK = false
-
-local vKEnabled = false
-
-local oldSelectedAnim = nil
-local currentTb = nil -- if multiselection is disabled
-
--- FUNCTIONS
-
-local function createExtraButton(name, parent, multiSelection, code) -- idk if i will work futurely on No Toggle version. it only works with toggle btw
-	for _, v in pairs(parent:GetChildren()) do
-		if v:IsA("TextButton") then
-			if v.Text == name then
-				return
-			end
-		end
+local function AddConnection(conn, tbl)
+	if conn then
+		table.insert(tbl, conn)
 	end
 
-	local tb = Instance.new("TextButton")
-	tb.Parent = parent
-	tb.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-	tb.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	tb.BorderSizePixel = 0
-	tb.AutoButtonColor = false
-	tb.Font = Enum.Font.Sarpanch
-	tb.Text = tostring(name)
-	tb.TextColor3 = Color3.fromRGB(255, 255, 255)
-	tb.TextScaled = true
-	tb.TextWrapped = true
-	tb:SetAttribute("activated", false)
-
-	tb.MouseButton1Down:Connect(function()
-		if tb:GetAttribute("activated") then
-			tb:SetAttribute("activated", false) -- disabled
-			tb.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-
-			if code then code(tb) end
-		else
-			if multiSelection then
-				tb:SetAttribute("activated", true)
-				tb.BackgroundColor3 = Color3.fromRGB(0, 163, 166)
-			else
-				if currentTb then
-					if currentTb ~= tb then
-						currentTb:SetAttribute("activated", false)
-						currentTb.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-					end
-				end
-
-				currentTb = tb
-				currentTb:SetAttribute("activated", true)
-				currentTb.BackgroundColor3 = Color3.fromRGB(0, 163, 166)
-			end
-
-			if code then code(tb) end
-		end
-	end)
+	return conn
 end
 
-local function createModButton(name, category, toggle, code, extraCode)
-	local btn = Instance.new("TextButton")
-
-	for _, cat in pairs(ScreenGui:GetDescendants()) do
-		if cat.Name == category then
-			btn.Parent = cat:FindFirstChild("holder")
-		end
-	end
-
-	btn.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-	btn.BorderSizePixel = 0
-	btn.Font = Enum.Font.Sarpanch
-	btn.Text = name
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.TextScaled = true
-	btn.AutoButtonColor = false
-	btn:SetAttribute("activated", false)
-
-	btn.MouseButton1Down:Connect(function()
-		if toggle then
-			if btn:GetAttribute("activated") then
-				btn:SetAttribute("activated", false) -- disabled
-				btn.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-				code(false)
-			else
-				btn:SetAttribute("activated", true) -- enabled
-				btn.BackgroundColor3 = Color3.fromRGB(0, 163, 166)
-				code(true)
-			end
-		else
-			if btn.BackgroundColor3 == Color3.fromRGB(127, 0, 0) then return end
-			btn.BackgroundColor3 = Color3.fromRGB(127, 0, 0)
-
-			code()
-		end
-	end)
-
-	if extraCode then
-		local ScrollingFrame = Instance.new("ScrollingFrame")
-		local TextLabel = Instance.new("TextLabel")
-		local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
-		local UIGridLayout = Instance.new("UIGridLayout")
-		local extraHider = Instance.new("TextButton")
-
-		ScrollingFrame.Name = tostring(name)
-		ScrollingFrame.Visible = false
-		ScrollingFrame.Parent = extraFolder
-		ScrollingFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-		ScrollingFrame.BackgroundColor3 = Color3.fromRGB(44, 44, 44)
-		ScrollingFrame.BorderSizePixel = 0
-		ScrollingFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-		ScrollingFrame.Size = UDim2.new(0.17, 0, 0.7, 0)
-		ScrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-		ScrollingFrame.ScrollBarThickness = 0
-		ScrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-		TextLabel.Parent = ScrollingFrame
-		TextLabel.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
-		TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-		TextLabel.BorderSizePixel = 0
-		TextLabel.Size = UDim2.new(1, 0, 0.04, 0)
-		TextLabel.Font = Enum.Font.Sarpanch
-		TextLabel.Text = "Extra"
-		TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-		TextLabel.TextScaled = true
-		TextLabel.TextWrapped = true
-
-		UITextSizeConstraint.Parent = TextLabel
-		UITextSizeConstraint.MaxTextSize = 33
-
-		UIGridLayout.Parent = ScrollingFrame
-		UIGridLayout.FillDirection = Enum.FillDirection.Horizontal
-		UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		UIGridLayout.CellPadding = UDim2.new(0, 0, 0, 0)
-		UIGridLayout.CellSize = UDim2.new(1, 0, 0.07, 0)
-
-		extraHider.Name = "extraHider"
-		extraHider.Parent = TextLabel
-		extraHider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-		extraHider.BackgroundTransparency = 1
-		extraHider.BorderSizePixel = 0
-		extraHider.Position = UDim2.new(0.8, 0, 0, 0)
-		extraHider.Size = UDim2.new(0.2, 0, 1, 0)
-		extraHider.Font = Enum.Font.Sarpanch
-		extraHider.Text = "-"
-		extraHider.TextColor3 = Color3.fromRGB(255, 255, 255)
-		extraHider.TextScaled = true
-		extraHider.TextWrapped = true
-
-		extraHider.MouseButton1Down:Connect(function()
-			ScrollingFrame.Visible = false
-			bg.Visible = false
-
-			-- need to add background working
-
-			for _, v in pairs(ScreenGui:GetChildren()) do
-				if v:IsA("Frame") then
-					if v.Name ~= "bg" then
-						v.Visible = true
-					end
-				end
-			end
-		end)
-
-		btn.MouseButton2Down:Connect(function()
-			ScrollingFrame.Visible = not ScrollingFrame.Visible
-			bg.Visible = true
-
-			for _, v in pairs(ScreenGui:GetChildren()) do
-				if v:IsA("Frame") then
-					if v.Name ~= "bg" then
-						v.Visible = not ScrollingFrame.Visible
-					end
-				end
-			end
-
-			extraCode()
-		end)
-	end
-end
-
-local function isModActive(connTable)
-	if typeof(connTable) ~= "table" then return false end
-	return next(connTable) ~= nil -- next returns nil if table is empty
-end
-
-local function connDisconnect(conn)
-	if typeof(conn) == "table" then
-		for _, c in pairs(conn) do
-			if c then
-				c:Disconnect()
-			end
-		end
-		for k in pairs(conn) do
-			conn[k] = nil
-		end
-	elseif typeof(conn) == "RBXScriptConnection" then
-		if conn then
-			conn:Disconnect()
-			conn = nil
-		end
-	end
-end
-
-local function cleanupConnections()
-	for _, connection in ipairs(movesConnector) do
-		connection:Disconnect()
-	end
-	movesConnector = {}
-end
-
-local function setupMoves()
-	cleanupConnections()
-
-	local moves = Player.PlayerGui.Hotbar.Backpack.Hotbar
-
-	for _, button in pairs(moves:GetDescendants()) do
-		if button:IsA("TextButton") then
-			if movesTbl[button.Name] ~= nil then
-				movesConnector[#movesConnector+1] = button.DescendantAdded:Connect(function(desc)
-					if desc.Name == "Cooldown" then
-						movesTbl[button.Name] = true
-
-						if button.Name == "1" and movesTbl["1"] == true then
-							task.spawn(function() -- only flowing water can void kill
-								canStartVK = true
-								task.wait(2)
-								canStartVK = false
-							end)
-						end
-					end
-				end)
-
-				movesConnector[#movesConnector+1] = button.DescendantRemoving:Connect(function(desc)
-					if desc.Name == "Cooldown" then
-						movesTbl[button.Name] = false
-					end
-				end)
-			end
-		end
-	end
-end
-
--- when starting
-if Player.Character then
-	setupMoves()
-end
-
--- Toggle With T Key
-uis.InputBegan:Connect(function(input, processed)
-	if processed then return end
-	if input.KeyCode == Enum.KeyCode.T then
-		ScreenGui.Enabled = not ScreenGui.Enabled
-	end
-end)
-
--- MAIN
-createMenu("Combat", .1)
-createMenu("Player", .3)
-createMenu("Visuals", .5)
-createMenu("Miscellaneous", .7)
-
--- TP Backwards
-local tpBackwardsConnection
-createModButton("TP Backwards", "Player", true, function(isEnabled)
-	if isEnabled then
-		tpBackwardsConnection = uis.InputBegan:Connect(function(i, p)
-			if p then return end
-
-			if i.KeyCode == Enum.KeyCode.R then
-				if Character and Character:FindFirstChild("HumanoidRootPart") then
-					local root = Character.HumanoidRootPart
-					local look = root.CFrame.LookVector
-					root.CFrame = root.CFrame + (-look * 26)
-				end
-			end
-		end)
-	else
-		connDisconnect(tpBackwardsConnection)
-	end
-end)
-
--- Void Kill
-
-local vKFlowingWater = false
-
-local function vKCode()
-	if not vKEnabled then return end
-
-	vKConns[#vKConns+1] = Character.DescendantAdded:Connect(function(d)
-		if d.Name == "Flowing Water" then
-			vKFlowingWater = true
-			task.wait(1)
-			vKFlowingWater = false
-		end
-	end)
-
-	vKConns[#vKConns+1] = Character.ChildAdded:Connect(function(c)	
-		if c.Name == "ForceField" then
-
-			if not canStartVK then return end			
-
-			local hf = Character:FindFirstChild("HunterFists")
-
-			if hf == nil then return end		
-			if not vKFlowingWater then return end
-
-			task.spawn(function()
-				task.wait(1.3)
-				oldPos = HumanoidRootPart.CFrame
-
-				if not vKProceed then return end
-
-				HumanoidRootPart.CFrame = CFrame.new(100, -450, 100)
-				task.wait(.5)
-				HumanoidRootPart.CFrame = oldPos
+local function ClearConnections(tbl)
+	if next(tbl) then
+		for _, conn in ipairs(tbl) do
+			pcall(function()
+				conn:Disconnect()
 			end)
-		elseif c.Name == "Effects" then
-			vKProceed = false
 		end
-	end)
-
-	vKConns[#vKConns+1] = Character.ChildRemoved:Connect(function(c)
-		if c.Name == "Effects" then
-			vKProceed = true
-		end
-	end)
+		table.clear(tbl)
+	end
 end
 
-createModButton("Void Kill [Bugged]", "Combat", true, function(isEnabled)
-	if isEnabled then
-		vKEnabled = true
-		vKCode()
-	elseif vKConns then
-		vKEnabled = false
-		connDisconnect(vKConns)
+local function isEnabled(obj)
+	if typeof(obj) == "table" then
+		return next(obj) and true or false
+	elseif typeof(obj) == "boolean" then
+		return obj
 	end
-end)
+end
 
--- Force AutoRotate
+local PreloadedIds = {}
 
-local forceAutoRotateConnection
+local function PreloadImage(Id)
+	if PreloadedIds[Id] then return end
+	
+	PreloadedIds[Id] = true
+	
+	local image = Instance.new("ImageLabel")
+	image.Image = "rbxassetid://" .. Id
+	
+	ContentProvider:PreloadAsync({image})
+end
 
-local function forceAutoRotateCode()
-	if not Character:FindFirstChild("Ragdoll") then
-		Humanoid.AutoRotate = true
+-- Functions
+local _AntiBlockDebuff = {}
+
+function AntiBlockDebuff(enabled)
+	ClearConnections(_AntiBlockDebuff)
+	
+	if enabled then
+		if Character:GetAttribute("Blocking") == nil then
+			Character:SetAttribute("Blocking", false)
+		end
+		
+		AddConnection(Character:GetAttributeChangedSignal("Blocking"):Connect(function()
+			if Character:GetAttribute("Blocking") == true then
+				Character:SetAttribute("Blocking", false)
+			end
+		end), _AntiBlockDebuff)
 	end
+end
 
-	forceAutoRotateConnection = Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
+local _ForceAutoRotate = {}
+
+function ForceAutoRotate(enabled)
+	ClearConnections(_ForceAutoRotate)
+	
+	if enabled then		
 		if not Character:FindFirstChild("Ragdoll") then
 			Humanoid.AutoRotate = true
 		end
-	end)
+		
+		AddConnection(Humanoid:GetPropertyChangedSignal("AutoRotate"):Connect(function()
+			if not Character:FindFirstChild("Ragdoll") then
+				Humanoid.AutoRotate = true
+			end
+		end), _ForceAutoRotate)
+	end
 end
 
-createModButton("Force AutoRotate", "Player", true, function(isEnabled)
-	if isEnabled then
-		forceAutoRotateCode()
-	else
-		connDisconnect(forceAutoRotateConnection)
+local _TPBackwards = false
+
+function TPBackwards()
+	if _TPBackwards then
+		local look = HumanoidRootPart.CFrame.LookVector
+		HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + (-look * 26)
 	end
-end)
+end
 
--- Anti Block Debuff
+local _CounterVisualizer = {}
 
-local antiBlockDebuffConnection
-
-local function antiBlockDebuffCode()
-	if Character:GetAttribute("Blocking") == nil then
-		Character:SetAttribute("Blocking", false)
-	end
-
-	antiBlockDebuffConnection = Character:GetAttributeChangedSignal("Blocking"):Connect(function()
-		if Character:GetAttribute("Blocking") == true then
-			Character:SetAttribute("Blocking", false)
+function CounterVisualizer(enabled)
+	PreloadImage(137607954274376)
+	
+	for _, obj in pairs(workspace.Live:GetChildren()) do
+		if obj.Head:FindFirstChild("CounterV") then
+			obj.Head.CounterV:Destroy()
 		end
-	end)
-end
-
-createModButton("Anti Block Debuff", "Player", true, function(isEnabled)
-	if isEnabled then
-		antiBlockDebuffCode()
-	else
-		connDisconnect(antiBlockDebuffConnection)
 	end
-end)
+	
+	ClearConnections(_CounterVisualizer)
+	
+	local function createDCImage(chr)
+		local BillboardGui = Instance.new("BillboardGui")
+		local ImageLabel = Instance.new("ImageLabel")
 
--- No Cutscene
-local noCutsceneConns = {}
+		BillboardGui.Name = "CounterV"
+		BillboardGui.Parent = chr.Head
+		BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		BillboardGui.Active = true
+		BillboardGui.LightInfluence = 1
+		BillboardGui.Size = UDim2.new(3, 0, 3, 0)
+		BillboardGui.StudsOffset = Vector3.new(0, 4, 0)
 
-local function cloneCam()
-	local newCam = Instance.new("Camera")
-	newCam.CameraSubject = Humanoid
-	newCam.CameraType = Enum.CameraType.Custom
-	newCam.Parent = workspace
-
-	cam = newCam
-
-	noCutsceneConns.noCutsceneConns1 = newCam:GetPropertyChangedSignal("CameraType"):Connect(function()
-		newCam:Destroy()
-		cloneCam()
-	end)
-end
-
-createModButton("No Cutscene", "Miscellaneous", true, function(isEnabled)
-	if isEnabled then
-		noCutsceneConns.noCutsceneConns2 = cam:GetPropertyChangedSignal("CameraType"):Connect(function()
-			cam:Destroy()
-			cloneCam()
-		end)
-	else
-		connDisconnect(noCutsceneConns)
+		ImageLabel.Parent = BillboardGui
+		ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ImageLabel.BackgroundTransparency = 1
+		ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+		ImageLabel.BorderSizePixel = 0
+		ImageLabel.Size = UDim2.new(1, 0, 1, 0)
+		ImageLabel.Image = "rbxassetid://137607954274376"
 	end
-end)
-
--- Counter Visualizer
-
-local function createDCImage(chr)
-	local BillboardGui = Instance.new("BillboardGui")
-	local ImageLabel = Instance.new("ImageLabel")
-
-	--Properties:
-	BillboardGui.Name = "CounterV"
-	BillboardGui.Parent = chr.Head
-	BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	BillboardGui.Active = true
-	BillboardGui.LightInfluence = 1
-	BillboardGui.Size = UDim2.new(3, 0, 3, 0)
-	BillboardGui.StudsOffset = Vector3.new(0, 4, 0)
-
-	ImageLabel.Parent = BillboardGui
-	ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	ImageLabel.BackgroundTransparency = 1
-	ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-	ImageLabel.BorderSizePixel = 0
-	ImageLabel.Size = UDim2.new(1, 0, 1, 0)
-	ImageLabel.Image = "rbxassetid://137607954274376"
-end
-
-local function cVReconnector(chr)
-	cVConns[#cVConns+1] = chr.ChildAdded:Connect(function(c)
-		if c.Name == "Counter" and c:IsA("Accessory") then
-			createDCImage(chr)
-		end
-	end)
-
-	cVConns[#cVConns+1] = chr.ChildRemoved:Connect(function(c)
-		if c.Name == "Counter" and c:IsA("Accessory") then
-			chr.Head:FindFirstChild("CounterV"):Destroy()
-		end
-	end)
-end
-
-createModButton("Counter Visualizer", "Visuals", true, function(isEnabled)
-	if isEnabled then
-		cVConns[#cVConns+1] = game.Players.PlayerAdded:Connect(function(plr)
-			cVConns[#cVConns+1] = plr.CharacterAdded:Connect(function(chr)
-				cVReconnector(chr)
-			end)		
-		end)
-
-		for _, v in pairs(Live:GetChildren()) do		
-			if game.Players:GetPlayerFromCharacter(v) and v ~= Character then		
-				local plr = game.Players:GetPlayerFromCharacter(v)
-
-				if v:FindFirstChild("Counter") then
-					createDCImage(v)
+	
+	if enabled then
+		for _, chr in pairs(workspace.Live:GetChildren()) do
+			if game.Players:GetPlayerFromCharacter(chr) and chr ~= Character then
+				local plr = game.Players:GetPlayerFromCharacter(chr)
+				
+				if chr:FindFirstChild("Counter") then
+					createDCImage(chr)
 				end
-
-				cVConns[#cVConns+1] = plr.CharacterAdded:Connect(function(chr)
-					cVReconnector(chr)
-				end)
-
-				cVConns[#cVConns+1] = v.ChildAdded:Connect(function(c)
-					if c.Name == "Counter" and c:IsA("Accessory") then
-						createDCImage(v)
+				
+				AddConnection(plr.CharacterAdded:Connect(function(chr)
+					AddConnection(chr.ChildAdded:Connect(function(obj)
+						if obj.Name == "Counter" and obj:IsA("Accessory") then
+							createDCImage(chr)
+						end
+					end), _CounterVisualizer)
+					
+					AddConnection(chr.ChildRemoved:Connect(function(obj)
+						if obj.Name == "Counter" and obj:IsA("Accessory") then
+							chr.Head:FindFirstChild("CounterV"):Destroy()
+						end
+					end), _CounterVisualizer)
+				end), _CounterVisualizer)
+				
+				AddConnection(chr.ChildAdded:Connect(function(obj)
+					if obj.Name == "Counter" and obj:IsA("Accessory") then
+						createDCImage(chr)
 					end
-				end)
-
-				cVConns[#cVConns+1] = v.ChildRemoved:Connect(function(c)
-					if c.Name == "Counter" and c:IsA("Accessory") then
-						v.Head:FindFirstChild("CounterV"):Destroy()
+				end), _CounterVisualizer)
+				
+				AddConnection(chr.ChildRemoved:Connect(function(obj)
+					if obj.Name == "Counter" and obj:IsA("Accessory") then
+						chr.Head:FindFirstChild("CounterV"):Destroy()
 					end
-				end)
-			end
-		end
-	else
-		connDisconnect(cVConns)
-
-		for _, v in pairs(Live:GetChildren()) do
-			if v.Head:FindFirstChild("CounterV") then
-				v.Head.CounterV:Destroy()
+				end), _CounterVisualizer)
 			end
 		end
 	end
-end)
+end
 
--- KJ Flexworks Anim
-local function createSounds()
-	for _, s in pairs(sounds) do
-		if s then
-			s:Destroy()
-		end
+local _NoCutscene = {}
+
+function NoCutscene(enabled)
+	ClearConnections(_NoCutscene)
+	
+	local function CloneCam()
+		local NewCam = Instance.new("Camera")
+		NewCam.CameraSubject = Humanoid
+		NewCam.CameraType = Enum.CameraType.Custom
+		NewCam.Parent = workspace
+
+		Camera = NewCam
+		
+		AddConnection(NewCam:GetPropertyChangedSignal("CameraType"):Connect(function()
+			NewCam:Destroy()
+			CloneCam()
+		end), _NoCutscene)
 	end
-
-	sounds = {}
-
-	local kjphysic = Instance.new("Sound")
-	kjphysic.SoundId = "rbxassetid://99126314241685"
-	kjphysic.Volume = 2.5
-	kjphysic.Parent = workspace
-
-	local kjvoice = Instance.new("Sound")
-	kjvoice.SoundId = "rbxassetid://128136381213631"
-	kjvoice.Volume = 2.5
-	kjvoice.Parent = workspace
-
-	local kjmusic = Instance.new("Sound")
-	kjmusic.SoundId = "rbxassetid://95410275491981"
-	kjmusic.Volume = 2.5
-	kjmusic.Parent = workspace
-
-	table.insert(sounds, kjphysic)
-	table.insert(sounds, kjvoice)
-	table.insert(sounds, kjmusic)
+	
+	if enabled then
+		if Camera.CameraType == Enum.CameraType.Scriptable then
+			Camera:Destroy()
+			CloneCam()
+		end
+		
+		AddConnection(Camera:GetPropertyChangedSignal("CameraType"):Connect(function()
+			Camera:Destroy()
+			CloneCam()
+		end), _NoCutscene)
+	end
 end
 
-local function kjSetup(char)
-	Character = char
-	Humanoid = char:WaitForChild("Humanoid")
-	Animator = Humanoid:WaitForChild("Animator")
+local _AntiDC = {}
 
-	kjTrack = Animator:LoadAnimation(kjAnim)
+function AntiDC(enabled)
+	ClearConnections(_AntiDC)
+	
+	if enabled then
+		for _, obj in Character:GetChildren() do
+			if obj.Name == "NoRotateUltimate" then
+				local oldPos = HumanoidRootPart.CFrame
+				HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)	
 
-	createSounds()
-end
+				task.wait(.8)
 
-
-createModButton("KJ Flexworks Anim", "Miscellaneous", false, function()
-	kjSetup(Character)
-
-	uis.InputBegan:Connect(function(input, processed)
-		if processed then return end
-
-		-- Stop KJ'S Anim
-		if input.KeyCode == Enum.KeyCode.F then
-			if kjTrack and kjTrack.IsPlaying then
-				kjTrack:Stop()
-			end
-
-			for _, s in pairs(sounds) do
-				if s.IsPlaying then
-					s:Stop()
+				if Character:FindFirstChild("Freeze") then
+					Character:FindFirstChild("Freeze"):Destroy()
 				end
-			end
-		end
 
-		-- Start
-		if input.KeyCode == Enum.KeyCode.Z then
-			if kjTrack.IsPlaying then
-				kjTrack:Stop()
-				task.wait(0.05)
-			end
-			kjTrack:Play()
-
-			for _, s in pairs(sounds) do
-				if s.IsPlaying then
-					s:Stop()
-					task.wait(0.05)
+				if Character:FindFirstChild("NoRotate") then
+					Character:FindFirstChild("NoRotate"):Destroy()
 				end
-				s:Play()
+
+				HumanoidRootPart.CFrame = oldPos
+				break
 			end
 		end
-	end)
-end)
+		
+		AddConnection(Character.ChildAdded:Connect(function(obj)
+			if obj.Name == "NoRotateUltimate" then
+				local oldPos = HumanoidRootPart.CFrame
+				HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)	
 
-local Extras = ScreenGui:WaitForChild("Extras")
+				task.wait(.8)
 
--- Damage Visualizer
-local dmgVisualizerConns = {}
+				if Character:FindFirstChild("Freeze") then
+					Character:FindFirstChild("Freeze"):Destroy()
+				end
 
-local function dmgVisualizerCode2(chr)
-	if chr:GetAttribute("LastDamage") == nil then
-		chr:SetAttribute("LastDamage", 0)
-	end
+				if Character:FindFirstChild("NoRotate") then
+					Character:FindFirstChild("NoRotate"):Destroy()
+				end
 
-	dmgVisualizerConns[#dmgVisualizerConns+1] = chr:GetAttributeChangedSignal("LastDamage"):Connect(function()
-		local h = nil
-
-		if chr:FindFirstChild("ImHighRn") == nil then
-
-			h = Instance.new("Highlight")
-			h.Name = "ImHighRn"
-			h.FillColor = Color3.new(1)
-			h.FillTransparency = .6
-			h.OutlineColor = Color3.fromRGB(150)
-			h.DepthMode = Enum.HighlightDepthMode.Occluded
-			h.Parent = chr
-		end
-
-		local savedNumber = chr:GetAttribute("LastDamage")
-
-		task.wait(.7)
-
-		if savedNumber ~= chr:GetAttribute("LastDamage") then return end
-
-		local highlight = chr:FindFirstChild("ImHighRn")
-		if highlight then
-			highlight:Destroy()
-		end
-	end)
-end
-
-local function dmgVisualizerCode()
-	dmgVisualizerConns[#dmgVisualizerConns+1] = game.Players.PlayerAdded:Connect(function(plr)
-		dmgVisualizerConns[#dmgVisualizerConns+1] = plr.CharacterAdded:Connect(function(chr)
-			dmgVisualizerCode2(chr)	
-		end)
-	end)
-
-	for _, chr in pairs(Live:GetChildren()) do
-		if chr ~= Character then
-			local plr = game.Players:GetPlayerFromCharacter(chr)
-			if not plr then continue end -- "continue" just resets the actual round of for loop
-
-			dmgVisualizerCode2(chr)
-
-			dmgVisualizerConns[#dmgVisualizerConns+1] = plr.CharacterAdded:Connect(function(chr)
-				dmgVisualizerCode2(chr)
-			end)
-		end
+				HumanoidRootPart.CFrame = oldPos
+			end
+		end), _AntiDC)
 	end
 end
 
-local dmgVisualizer = false
-createModButton("Damage Visualizer", "Visuals", true, function(isEnabled)
-	if isEnabled then
-		dmgVisualizer = true
-		dmgVisualizerCode()
-	elseif dmgVisualizerConns then
-		dmgVisualizer = false
+local _KorbloxHeadless = false
 
-		connDisconnect(dmgVisualizerConns)
-
-		for _, v in pairs(Live:GetChildren()) do
-			if v:FindFirstChild("ImHighRn") then
-				v.ImHighRn:Destroy()
-			end
-		end
-	end
-end)
-
--- Anti Death Counter
-
-local antiDeathCounterConnection
-
-local function antiDCCode()
-	antiDeathCounterConnection = Character.ChildAdded:Connect(function(child)
-		if child.Name == "NoRotateUltimate" then
-			local oldPos = HumanoidRootPart.CFrame
-			HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)	
-
-			task.wait(.8)
-
-			if Character:FindFirstChild("Freeze") then
-				Character:FindFirstChild("Freeze"):Destroy()
-			end
-
-			if Character:FindFirstChild("NoRotate") then
-				Character:FindFirstChild("NoRotate"):Destroy()
-			end
-
-			HumanoidRootPart.CFrame = oldPos
-		end
-	end)
-end
-
-createModButton("Anti Death Counter", "Player", true, function(isEnabled)
-	if isEnabled then
-		antiDCCode()
-	else
-		connDisconnect(antiDeathCounterConnection)
-	end
-end)
-
--- Korblox + Headless
-
-local oldChrMesh ={
+local OldChrMesh = {
 	MeshId = 0,
 	OverlayTextureId = 0
 }
 
 local cMesh = nil
 
-local function korbloxHeadlessCode()
-	if Character:FindFirstChild("Head") then -- Headless
+function KorbloxHeadless(enabled)
+	if enabled then
+		_KorbloxHeadless = true
+		
 		if Character:FindFirstChild("Head") then -- Headless
+			task.wait(.3)
+			
 			local mesh = Instance.new("SpecialMesh", Character.Head)
 			mesh.Name = "fHeadless"
 			mesh.MeshType = Enum.MeshType.FileMesh
 		end
-	end
+				
+		for _, mesh in pairs(Character:GetChildren()) do
+			if mesh:IsA("CharacterMesh") and mesh.BodyPart == Enum.BodyPart.RightLeg then
+				cMesh = mesh
+				oldChrMesh.MeshId = cMesh.MeshId -- if plr has an chrMesh then it will save it
+				oldChrMesh.OverlayTextureId = cMesh.OverlayTextureId
 
-	for _, mesh in pairs(Character:GetChildren()) do
-		if mesh:IsA("CharacterMesh") and mesh.BodyPart == Enum.BodyPart.RightLeg then
-			cMesh = mesh
-			oldChrMesh.MeshId = cMesh.MeshId -- if plr has an chrMesh then it will save it
-			oldChrMesh.OverlayTextureId = cMesh.OverlayTextureId
-
-			mesh.MeshId = 101851696
-			mesh.OverlayTextureId = 101851254
-		else
-			cMesh = Instance.new("CharacterMesh", Character)
-			cMesh.BodyPart = Enum.BodyPart.RightLeg
-			cMesh.MeshId = 101851696
-			cMesh.OverlayTextureId = 101851254
+				mesh.MeshId = 101851696
+				mesh.OverlayTextureId = 101851254
+				break
+			else
+				cMesh = Instance.new("CharacterMesh", Character)
+				cMesh.BodyPart = Enum.BodyPart.RightLeg
+				cMesh.MeshId = 101851696
+				cMesh.OverlayTextureId = 101851254
+				break
+			end
 		end
-		break
-	end
-end
-
-createModButton("Korblox + Headless", "Visuals", true, function(isEnabled)
-	if isEnabled then
-		korbloxHeadlessCode()
 	else
-		cMesh.MeshId = oldChrMesh.MeshId
-		cMesh.OverlayTextureId = oldChrMesh.OverlayTextureId
-		cMesh:Destroy()
+		_KorbloxHeadless = false
+		
+		if cMesh then
+			cMesh.MeshId = OldChrMesh.MeshId
+			cMesh.OverlayTextureId = OldChrMesh.OverlayTextureId
+			cMesh:Destroy()
 
-		cMesh = nil
+			cMesh = nil
+		end
 
 		local head = Character:FindFirstChild("Head")
-		local hMesh = head:FindFirstChild("fHeadless")
+		
+		if head then
+			local hMesh = head:FindFirstChild("fHeadless")
 
-		if hMesh then
-			hMesh:Destroy()
-		end
-	end
-end)
-
--- M1 Reset
-
-local m1ResetConns = {}
-
-local function m1ResetCode()
-	m1ResetConns[#m1ResetConns+1] = HumanoidRootPart.ChildAdded:Connect(function(c)
-		if c.Name == "dodgevelocity" then
-			m1ResetConns[#m1ResetConns+1] = rs.Heartbeat:Connect(function()
-				if c then
-					c.Name = "velocity"
-				end
-			end)
-		end
-	end)
-
-	m1ResetConns[#m1ResetConns+1] = HumanoidRootPart.ChildRemoved:Connect(function(c)
-		if c.Name == "velocity" then
-			if m1ResetConns then
-				m1ResetConns:Disconnect()
+			if hMesh then
+				hMesh:Destroy()
 			end
 		end
-	end)
+	end
 end
 
-createModButton("M1 Reset", "Combat", true, function(isEnabled)
-	if isEnabled then
-		m1ResetCode()
-	else
-		connDisconnect(m1ResetConns)
-	end
-end)
+local _M1Reset = {}
 
--- Always Can Jump
-local alwaysJumpEnabled = false
-
-createModButton("Always Can Jump", "Player", true, function(isEnabled)
-	if isEnabled then
-		alwaysJumpEnabled = true
-		Humanoid.UseJumpPower = false
-	else
-		alwaysJumpEnabled = false
-		Humanoid.UseJumpPower = true
-	end
-end)
-
--- Auto Mambo
-local mamboSound = Instance.new("Sound", workspace)
-mamboSound.Name = "Mambo"
-mamboSound.SoundId = "rbxassetid://104825100882122"
-mamboSound.Volume = .3
-
-local tcs = game:GetService("TextChatService")
-local channel = tcs.TextChannels.RBXGeneral
-
-local mamboEnabled = false
-local lastMambo = 0
-
-local function mamboCode()
-	local randomTime = math.random(30, 60)
-	local now = tick()
-	lastMambo = now
-
-	task.wait(randomTime)
-
-	if now ~= lastMambo then return end
-	if not mamboEnabled then return end
-
-	local mambo = workspace:FindFirstChild("Mambo")
-
-	if mambo then
-		mambo:Play()
-	end
-
-	channel:SendAsync("mambo")
-
-	mamboCode()
-end
-
-createModButton("Auto Mambo", "Miscellaneous", true, function(isEnabled)
-	if isEnabled then
-		mamboEnabled = true
-		mamboCode()
-	else
-		mamboEnabled = false
-	end
-end)
-
--- TriggerBot
-local triggerBotConn
-local vim = game:GetService("VirtualInputManager")
-
-local TRIGGER_DIST = 7.5
-
-local function triggerBotCode()
-	triggerBotConn = rs.Heartbeat:Connect(function()
-		local closestChar = nil
-		local closestDist = math.huge
-
-		for _, chr in pairs(Live:GetChildren()) do
-			local hrp = chr:FindFirstChild("HumanoidRootPart")
-			if hrp and chr ~= Character then
-				local dist = (HumanoidRootPart.Position - hrp.Position).Magnitude
-				if dist < closestDist then
-					closestDist = dist
-					closestChar = chr
+function M1Reset(enabled)
+	ClearConnections(_M1Reset)
+	
+	if enabled then
+		AddConnection(HumanoidRootPart.ChildAdded:Connect(function(obj)
+			if obj.Name == "dodgevelocity" then
+				while obj.Name == "dodgevelocity" do
+					task.wait()
+					
+					if obj then
+						obj.Name = "velocity"
+					end
 				end
 			end
-		end
-
-		if closestDist <= TRIGGER_DIST and closestChar then
-			vim:SendMouseButtonEvent(0, 0, 0, true, game, 0)
-			vim:SendMouseButtonEvent(0, 0, 0, false, game, 0)
-		end
-	end)
+		end), _M1Reset)
+	end
 end
 
-createModButton("Trigger Bot", "Combat", true, function(isEnabled)
-	if isEnabled then
-		triggerBotCode()
-	else
-		connDisconnect(triggerBotConn)
-	end
-end)
+local _HideBlockAnims = {}
 
--- Emote While Dashing
-local emoteWhileDashConn	
-
-local function emoteWhileDashCode()
-	emoteWhileDashConn = Character:GetAttributeChangedSignal("_JustDashed"):Connect(function()
-		Character:SetAttribute("_JustDashed", 0)
-	end)
-end
-
-local emoteWhileDashing = false
-
-createModButton("Emote While Side Dash", "Player", true, function(isEnabled)
-	if isEnabled then
-		emoteWhileDashing = true
-		emoteWhileDashCode()
-	else
-		emoteWhileDashing = false
-		connDisconnect(emoteWhileDashConn)
-	end
-end)
-
--- Hide Block Anim
-local BlockIDS = {
-	10470389827,
-	13380778193,
-	13935548552
-}
-
-local hideBlockAnimConn = nil
-
-local function HideBlockAnimCode()
-	hideBlockAnimConn = Animator.AnimationPlayed:Connect(function(track)
-		for _, id in pairs(BlockIDS) do
-			if track.Animation.AnimationId == "rbxassetid://" .. id then
-				track:Stop()
+function HideBlockAnims(enabled)
+	ClearConnections(_HideBlockAnims)
+	
+	local BlockIDS = {
+		10470389827,
+		13380778193,
+		13935548552
+	}
+	
+	if enabled then
+		AddConnection(Animator.AnimationPlayed:Connect(function(track)
+			for _, id in pairs(BlockIDS) do
+				if track.Animation.AnimationId == "rbxassetid://" .. id then
+					track:Stop()
+				end
 			end
-		end
-	end)
+		end), _HideBlockAnims)
+	end
 end
 
-createModButton("Hide Block Anim", "Visuals", true, function(isEnabled)
-	if isEnabled then
-		HideBlockAnimCode()
-	else
-		connDisconnect(hideBlockAnimConn)
+local _EmoteWhileDash = {}
+
+function EmoteWhileDash(enabled)
+	ClearConnections(_EmoteWhileDash)
+	
+	if enabled then
+		AddConnection(Character:GetAttributeChangedSignal("_JustDashed"):Connect(function()
+			Character:SetAttribute("_JustDashed", 0)
+		end), _EmoteWhileDash)
 	end
-end)
+end
 
--- Jerk Off
-createModButton("Jerk Off", "Miscellaneous", false, function()
-	loadstring(game:HttpGet("https://pastefy.app/wa3v2Vgm/raw"))("Spider Script")
-end)
+local _Lay = false
 
--- Rejoin
-createModButton("Rejoin Server", "Miscellaneous", false, function()	
-	telService:TeleportToPlaceInstance(placeId, jobId, Player)
-end)
+function Lay()
+	if _Lay then
+		Humanoid.Sit = true
+		task.wait(0.1)
+		Humanoid.RootPart.CFrame = Humanoid.RootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
+		for _, v in ipairs(Humanoid:GetPlayingAnimationTracks()) do
+			v:Stop()
+		end
+	end
+end
 
--- Lay
-local layConn
+local _RemoveEmoteFreeze = {}
 
-local function layCode()
-	layConn = uis.InputBegan:Connect(function(i, p)
-		if p then return end
-		if i.KeyCode == Enum.KeyCode.Z then
-			Humanoid.Sit = true
-			task.wait(0.1)
-			Humanoid.RootPart.CFrame = Humanoid.RootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
-			for _, v in ipairs(Humanoid:GetPlayingAnimationTracks()) do
-				v:Stop()
+function RemoveEmoteFreeze(enabled)
+	ClearConnections(_RemoveEmoteFreeze)
+	
+	if enabled then
+		AddConnection(Character.ChildAdded:Connect(function(obj)
+			if obj.Name == "DoingEmote" and obj:IsA("Accessory") then
+				local freeze = Character:WaitForChild("Freeze")
+				freeze:Destroy()
 			end
-		end
-	end)
+		end), _RemoveEmoteFreeze)
+	end
 end
 
-createModButton("Lay", "Miscellaneous", true, function(isEnabled)
-	if isEnabled then
-		layCode()
-	else
-		connDisconnect(layConn)
-	end
-end)
-
--- Remove Emote Freeze
-local remoteEmoteFreezeConn
-
-local function remoteEmoteFreezeCode()
-	remoteEmoteFreezeConn = Character.ChildAdded:Connect(function(child)
-		if child.Name == "DoingEmote" and child:IsA("Accessory") then
-			local freeze = Character:WaitForChild("Freeze")
-			freeze:Destroy()
-		end
-	end)
-end
-
-createModButton("Remove Emote Freeze", "Player", true, function(isEnabled)
-	if isEnabled then
-		remoteEmoteFreezeCode()
-	else
-		connDisconnect(remoteEmoteFreezeConn)
-	end
-end)
-
--- Freeze Mid Air
-local freezeMidAirConns = {}
-
+local _FreezeMidAir = false
 local thread = 0
 
-local function freezeMidAirCode()
-	freezeMidAirConns[#freezeMidAirConns+1] = uis.InputBegan:Connect(function(i, p)
-		if p then return end
+function FreezeMidAir(key)
+	if _FreezeMidAir then
+		local TempConn = {}
 
-		if i.KeyCode == Enum.KeyCode.R then
-			thread = thread + tick()
-			local oldThread = thread
+		AddConnection(UserInputService.InputEnded:Connect(function(i, p)
+			if i.KeyCode == key then
+				thread = thread + tick()
 
-			Humanoid.Sit = true
+				HumanoidRootPart.Anchored = false
+				Humanoid.Sit = false		
 
-			task.wait(0.1)
-
-			if oldThread ~= thread then return end
-
-			HumanoidRootPart.CFrame = HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
-			HumanoidRootPart.CFrame = HumanoidRootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
-
-			task.spawn(function()
-				for _, v in ipairs(Humanoid:GetPlayingAnimationTracks()) do
-					v:Stop()
-				end	
-			end)
-
-			task.wait(.07)
-
-			if oldThread ~= thread then return end
-
-			HumanoidRootPart.Anchored = true
-		end
-	end)
-
-	freezeMidAirConns[#freezeMidAirConns+1] = uis.InputEnded:Connect(function(i, p)
-		if p then return end
-
-		if i.KeyCode == Enum.KeyCode.R then
-			thread = thread + tick()
-
-			HumanoidRootPart.Anchored = false
-			Humanoid.Sit = false
-		end
-	end)
-end
-
-createModButton("Freeze Mid Air", "Player", true, function(isEnabled)
-	if isEnabled then
-		freezeMidAirCode()
-	else
-		connDisconnect(freezeMidAirConns)
-	end
-end)
-
--- Disable Player Collision
-local disablePlrColisionConn
-
-local function disablePlrColisionCode()
-	disablePlrColisionConn = rs.Heartbeat:Connect(function()
-		for _, v in pairs(Character:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.CollisionGroup = "nocol2" 
+				ClearConnections(TempConn)
 			end
-		end
-	end)
+		end), TempConn)
+		
+		thread = thread + tick()
+		local oldThread = thread
+
+		Humanoid.Sit = true
+
+		task.wait(0.1)
+
+		if oldThread ~= thread then return end
+
+		HumanoidRootPart.CFrame = HumanoidRootPart.CFrame * CFrame.new(0, 3, 0)
+		HumanoidRootPart.CFrame = HumanoidRootPart.CFrame * CFrame.Angles(math.pi * 0.5, 0, 0)
+
+		task.spawn(function()
+			for _, v in ipairs(Humanoid:GetPlayingAnimationTracks()) do
+				v:Stop()
+			end	
+		end)
+
+		task.wait(.07)
+
+		if oldThread ~= thread then return end
+
+		HumanoidRootPart.Anchored = true
+	end
 end
 
-createModButton("Disable Player Collision", "Player", true, function(isEnabled)
-	if isEnabled then
-		disablePlrColisionCode()
-	else
-		connDisconnect(disablePlrColisionConn)
+local _DisablePlayerCollision = {}
 
-		-- reverts
+function DisablePlayerCollision(enabled)
+	ClearConnections(_DisablePlayerCollision)
+	
+	if enabled then
+		AddConnection(RunService.Heartbeat:Connect(function()
+			for _, v in pairs(Character:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CollisionGroup = "nocol2" 
+				end
+			end
+		end), _DisablePlayerCollision)
+	else
 		for _, v in pairs(Character:GetDescendants()) do
 			if v:IsA("BasePart") then
 				v.CollisionGroup = "playercol" 
 			end
 		end
 	end
-end)
+end
 
--- Invisible Table Flip
-local invisibleTableFlipConns = {}
+local _InvisibleTableflip = {}
 
-local function invisibleTableFlipCode()
-	invisibleTableFlipConns.invisibleTableFlipConns1 = Character.ChildAdded:Connect(function(child)
-		if child.Name == "Table Flip" then
-			local list = {
-				"AntiMove",
-				"Freeze",
-				"HeavyBody",
-				"NoRotate"
-			}
+function InvisibleTableflip(enabled)
+	ClearConnections(_InvisibleTableflip)
+	
+	if enabled then
+		AddConnection(Character.ChildAdded:Connect(function(obj)
+			if obj.Name == "Table Flip" then
+				local list = {
+					"AntiMove",
+					"Freeze",
+					"HeavyBody",
+					"NoRotate"
+				}
 
-			local oldPos = nil
+				local oldPos = nil
 
-			local totalDeleted = 0
+				local totalDeleted = 0
 
-			task.spawn(function()
-				while totalDeleted ~= #list do
-					for _, v in pairs(Character:GetChildren()) do
-						for _, v2 in pairs(list) do
-							if v.Name == v2 then
-								v:Destroy()
-								totalDeleted += 1
+				task.spawn(function()
+					while totalDeleted ~= #list do
+						for _, v in pairs(Character:GetChildren()) do
+							for _, v2 in pairs(list) do
+								if v.Name == v2 then
+									v:Destroy()
+									totalDeleted += 1
+								end
 							end
 						end
+
+						task.wait(.1)
 					end
+				end)
 
-					task.wait(.1)
-				end
-			end)
+				task.spawn(function()
+					for i = 1, 20 do
+						HumanoidRootPart.CustomPhysicalProperties = nil
+						task.wait(.1)
+					end
+				end)
 
-			task.spawn(function()
-				for i = 1, 20 do
-					HumanoidRootPart.CustomPhysicalProperties = nil
-					task.wait(.1)
-				end
-			end)
+				local TIME = 3.5
 
-			local TIME = 3.5
+				task.spawn(function()
+					task.wait(TIME - .3)
 
-			task.spawn(function()
-				task.wait(TIME - .3)
+					oldPos = HumanoidRootPart.CFrame
+				end)
 
-				oldPos = HumanoidRootPart.CFrame
-			end)
+				task.wait(TIME)
 
-			task.wait(TIME)
+				HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)
 
-			HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)
+				task.wait(.6)
 
-			task.wait(.5)
-
-			HumanoidRootPart.CFrame = oldPos
-		end
-	end)
-
-	local tableflipID = "rbxassetid://11365563255"
-
-	invisibleTableFlipConns.invisibleTableFlipConns2 = Animator.AnimationPlayed:Connect(function(track)
-		local id = track.Animation.AnimationId
-
-		if id == tableflipID then
-			track:Stop()
-		end
-	end)
+				HumanoidRootPart.CFrame = oldPos
+			end
+		end), _InvisibleTableflip)
+	end
 end
 
-createModButton("Invisible Table Flip", "Visuals", true, function(isEnabled)
-	if isEnabled then
-		invisibleTableFlipCode()
-	else
-		connDisconnect(invisibleTableFlipConns)
+local _Reset = false
+
+function Reset()
+	if _Reset then
+		Humanoid.Health = 0
 	end
-end)
-
--- Float While Semi Ragdolled
-local floatWhileSemiRagdolledConns = {}
-
-local function floatWhileSemiRagdolledCode()
-	floatWhileSemiRagdolledConns.floatWhileSemiRagdolledConns1 = Character.ChildAdded:Connect(function(child)
-		if child.Name == "BeingLaunched" then -- start
-			humanoid.HipHeight = 4
-		elseif child.Name == "LaunchEnded" then -- end
-			humanoid.HipHeight = 0
-		end
-	end)
 end
 
-createModButton("Float While Semi Ragdolled", "Player", true, function(isEnabled)
-	if isEnabled then
-		floatWhileSemiRagdolledCode()
-	else
-		connDisconnect(floatWhileSemiRagdolledConns)
+local _FloatWhileSemiRagolled = {}
+
+function FloatWhileSemiRagolled(enabled)
+	ClearConnections(_FloatWhileSemiRagolled)
+	
+	if enabled then
+		AddConnection(Character.ChildAdded:Connect(function(obj)
+			if obj.Name == "BeingLaunched" then -- start
+				Humanoid.HipHeight = 4
+			elseif obj.Name == "LaunchEnded" then -- end
+				Humanoid.HipHeight = 0
+			end
+		end), _FloatWhileSemiRagolled)
 	end
-end)
+end
 
--- Avaliables
---("Combat")
---("Player")
---("Visuals")
---("Miscellaneous")
-
-local modsToReconnect = {
-	{conns = invisibleTableFlipConns, code = invisibleTableFlipCode},
-	{conns = disablePlrColisionConn, code = disablePlrColisionCode},
-	{conns = freezeMidAirConns, code = freezeMidAirCode},
-	{conns = remoteEmoteFreezeConn, code = remoteEmoteFreezeCode},
-	{conns = layConn, code = layCode},
-	{conns = hideBlockAnimConn, code = HideBlockAnimCode},
-	{conns = emoteWhileDashConn, code = emoteWhileDashCode},
-	{conns = triggerBotConn, code = triggerBotCode},
-	{conns = m1ResetConns, code = m1ResetCode},
-	{conns = antiDeathCounterConnection, code = antiDCCode},
-	{conns = vKConns, code = vKCode},
-	{conns = dmgVisualizerConns, code = dmgVisualizerCode},
-	{conns = floatWhileSemiRagdolledConns, code = floatWhileSemiRagdolledCode},
-}
-
-Player.CharacterAdded:Connect(function(char) -- my chrAdded
-	task.wait(.1)
-
+Player.CharacterAdded:Connect(function(char)
 	Character = char
-	Humanoid = char:WaitForChild("Humanoid")
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
+	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-
-	-- Reloads the previous ' ON ' options
-	for _, mod in pairs(modsToReconnect) do
-		if isModActive(mod.conns) then
-			mod.code()
-		end
-	end
-
-	-- Bools like this are just manually placed
-	if alwaysJumpEnabled then
-		Humanoid.UseJumpPower = false
-	end
-
-	if cMesh ~= nil then
-		korbloxHeadlessCode("wonderifixedit")
-	end
-
-	kjSetup(char)
-	setupMoves()
+	
+	FloatWhileSemiRagolled(isEnabled(_FloatWhileSemiRagolled))
+	InvisibleTableflip(isEnabled(_InvisibleTableflip))
+	DisablePlayerCollision(isEnabled(_DisablePlayerCollision))
+	RemoveEmoteFreeze(isEnabled(_RemoveEmoteFreeze))
+	EmoteWhileDash(isEnabled(_EmoteWhileDash))
+	HideBlockAnims(isEnabled(_HideBlockAnims))
+	M1Reset(isEnabled(_M1Reset))
+	KorbloxHeadless(isEnabled(_KorbloxHeadless))
+	AntiDC(isEnabled(_AntiDC))
+	NoCutscene(isEnabled(_NoCutscene))
+	CounterVisualizer(isEnabled(_CounterVisualizer))
+	AntiBlockDebuff(isEnabled(_AntiBlockDebuff))
+	ForceAutoRotate(isEnabled(_ForceAutoRotate))
 end)
+
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local Window = WindUI:CreateWindow({
+	Title = "Seitium Hub",
+	Icon = "eye",
+	Author = "all scripts made by infernus",
+})
+
+--// PLAYER \\--
+local Player_Tab = Window:Tab({
+	Title = "Player",
+	Icon = "user"
+})
+
+local TPBackwards_Section = Player_Tab:Section({
+	Title = "TP Backwards Config",
+	Box = true,
+	BoxBorder = true,
+})
+
+local TPBackwards_Toggle = TPBackwards_Section:Toggle({
+	Title = "TP Backwards",
+	Callback = function(state)
+		_TPBackwards = state
+	end,
+})
+
+TPBackwards_Section:Keybind({
+	Title = "Keybind",
+	Value = "R",
+	Callback = function()
+		TPBackwards()
+	end,
+})
+
+local FreezeMidAir_Section = Player_Tab:Section({
+	Title = "Freeze Mid Air Config",
+	Box = true,
+	BoxBorder = true,
+})
+
+local FreezeMidAir_Toggle = FreezeMidAir_Section:Toggle({
+	Title = "Freeze Mid Air",
+	Callback = function(state)
+		_FreezeMidAir = state
+	end,
+})
+
+FreezeMidAir_Section:Keybind({
+	Title = "Keybind",
+	Value = "X",
+	Callback = function(value)
+		FreezeMidAir(Enum.KeyCode[value])
+	end,
+})
+
+local Reset_Section = Player_Tab:Section({
+	Title = "Reset Config",
+	Box = true,
+	BoxBorder = true,
+})
+
+local Reset_Toggle = Reset_Section:Toggle({
+	Title = "Reset",
+	Callback = function(state)
+		_Reset = state
+	end,
+})
+
+Reset_Section:Keybind({
+	Title = "Keybind",
+	Value = "R",
+	Callback = function()
+		Reset()
+	end,
+})
+
+local FloatWhileSemiRagdolled_Toggle = Player_Tab:Toggle({
+	Title = "Float While Semi Ragolled",
+	Callback = function(state)
+		FloatWhileSemiRagdolled(state)
+	end,
+})
+
+local AntiDC_Toggle = Player_Tab:Toggle({
+	Title = "Anti Death Counter",
+	Callback = function(state)
+		AntiDC(state)
+	end,
+})
+
+local DisablePlayerCollision_Toggle = Player_Tab:Toggle({
+	Title = "Disable Player Collision",
+	Callback = function(state)
+		DisablePlayerCollision(state)
+	end,
+})
+
+local EmoteSideDash_Toggle = Player_Tab:Toggle({
+	Title = "Emote While Side Dashing",
+	Callback = function(state)
+		EmoteWhileDash(state)
+	end,
+})
+
+local RemoveEmoteFreeze_Toggle = Player_Tab:Toggle({
+	Title = "Remove Emote Freeze",
+	Callback = function(state)
+		RemoveEmoteFreeze(state)
+	end,
+})
+
+local ForceAutoRotate_Toggle = Player_Tab:Toggle({
+	Title = "Force AutoRotate",
+	Callback = function(state)
+		ForceAutoRotate(state)
+	end,
+})
+
+local AntiBlockDebuff_Toggle = Player_Tab:Toggle({
+	Title = "Anti Block Debuff",
+	Callback = function(state)
+		AntiBlockDebuff(state)
+	end,
+})
+
+--// COMBAT \\-
+local Combat_Tab = Window:Tab({
+	Title = "Combat",
+	Icon = "sword"
+})
+
+local M1Reset_Toggle = Combat_Tab:Toggle({
+	Title = "M1 Reset",
+	Callback = function(state)
+		M1Reset(state)
+	end,
+})
+
+--// VISUALS \\--
+local Visuals_Tab = Window:Tab({
+	Title = "Visuals",
+	Icon = "eye"
+})
+
+local CounterVisualizer_Toggle = Visuals_Tab:Toggle({
+	Title = "Counter Visualizer",
+	Callback = function(state)
+		CounterVisualizer(state)
+	end,
+})
+
+local InvisibleTableflip_Toggle = Visuals_Tab:Toggle({
+	Title = "Invisible Tableflip",
+	Callback = function(state)
+		InvisibleTableflip(state)
+	end,
+})
+
+local NoCutscene_Toggle = Visuals_Tab:Toggle({
+	Title = "No Cutscene",
+	Callback = function(state)
+		NoCutscene(state)
+	end,
+})
+
+local KorbloxHeadless_Toggle = Visuals_Tab:Toggle({
+	Title = "Korblox + Headless",
+	Callback = function(state)
+		KorbloxHeadless(state)
+	end,
+})
+
+local HideBlockAnim_Toggle = Visuals_Tab:Toggle({
+	Title = "Hide Block Animations",
+	Callback = function(state)
+		HideBlockAnims(state)
+	end,
+})
+
+--// MISCELLANEOUS \\--
+local Miscellaneous_Tab = Window:Tab({
+	Title = "Miscellaneous",
+	Icon = "toolbox"
+})
+
+local Lay_Section = Miscellaneous_Tab:Section({
+	Title = "Lay Config",
+	Box = true,
+	BoxBorder = true,
+})
+
+local Lay_Toggle = Lay_Section:Toggle({
+	Title = "Lay",
+	Callback = function(state)
+		_Lay = state
+	end,
+})
+
+Lay_Section:Keybind({
+	Title = "Keybind",
+	Value = "Z",
+	Callback = function()
+		Lay()
+	end,
+})
+
+local JerkOff_Button = Miscellaneous_Tab:Button({
+	Title = "Jerk Off",
+	Callback = function()
+		loadstring(game:HttpGet("https://pastefy.app/wa3v2Vgm/raw"))("Spider Script")
+	end,
+})
+
+local Rejoin_Button = Miscellaneous_Tab:Button({
+	Title = "Rejoin Server",
+	Callback = function()	
+		TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, Player)
+	end,
+})
+
+-- Join A Specific Server
+local CopyJobId_Button = Miscellaneous_Tab:Button({
+	Title = "Copy JobId",
+	Callback = function()
+		setclipboard(game.JobId)
+	end,
+})
+
+local JoinJobId_Input = Miscellaneous_Tab:Input({
+	Title = "Join with JobId",
+	Type = "Input",
+	Placeholder = "Enter JobId",
+	Callback = function(input) 
+		TeleportService:TeleportToPlaceInstance(game.PlaceId, input, Player)
+	end
+})
+
+--// CONFIG \\--
+local Config_Tab = Window:Tab({
+	Title = "Settings",
+	Icon = "settings"
+})
+
+Config_Tab:Keybind({
+	Title = "Show/Hide Menu",
+	Value = "Insert",
+	Callback = function(v)
+		Window:SetToggleKey(Enum.KeyCode[v])
+	end,
+})
