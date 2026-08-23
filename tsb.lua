@@ -1,5 +1,3 @@
-if not game:IsLoaded() then game.Loaded:Wait() end
-
 local UserInputService = game:GetService("UserInputService")
 local ContentProvider = game:GetService("ContentProvider")
 local RunService = game:GetService("RunService")
