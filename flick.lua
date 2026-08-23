@@ -1,5 +1,3 @@
-repeat task.wait() until game:IsLoaded()
-
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
