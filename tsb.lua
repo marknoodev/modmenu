@@ -392,7 +392,7 @@ function RemoveEmoteFreeze(enabled)
 					local freeze = Character:WaitForChild("Freeze")
 					freeze:Destroy()
 				end
-				
+
 				AddConnection(Animator.AnimationPlayed:Connect(function(track)
 					if track.Animation.AnimationId == "rbxassetid://7815618175" then
 						if Character:FindFirstChild("DoingEmote") then
@@ -492,13 +492,34 @@ function InvisibleTableflip(enabled)
 	if enabled then
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "Table Flip" then
+				local stoppedTableflip = false
+				
+				for _, track in Animator:GetPlayingAnimationTracks() do
+					if track.Animation.AnimationId == "rbxassetid://11365563255" then
+						track:Stop()
+						stoppedTableflip = true
+						break
+					end
+				end
+				
+				local TempConn = {}
+				
+				if not stoppedTableflip then
+					AddConnection(Animator.AnimationPlayed:Connect(function(track)
+						if track.Animation.AnimationId == "rbxassetid://11365563255" then
+							track:Stop()
+							ClearConnections(TempConn)
+						end
+					end), TempConn)
+				end
+			
 				local list = {
 					"AntiMove",
 					"Freeze",
 					"HeavyBody",
 					"NoRotate"
 				}
-
+			
 				local oldPos = nil
 
 				local totalDeleted = 0
