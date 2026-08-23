@@ -1,4 +1,4 @@
-repeat wait() until game.Loaded
+repeat wait() until game.Loaded end
 
 local Ids = {
 	-- Blox Fruits
