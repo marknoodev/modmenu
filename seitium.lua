@@ -1,4 +1,4 @@
-if not game:IsLoaded() then game.Loaded:Wait()
+if not game:IsLoaded() then game.Loaded:Wait() end
 
 local Ids = {
 	-- Blox Fruits
