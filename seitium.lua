@@ -1,5 +1,3 @@
-repeat wait() until game.Loaded end
-
 local Ids = {
 	-- Blox Fruits
 	[2753915549] = function()
