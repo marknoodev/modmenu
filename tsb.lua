@@ -605,39 +605,50 @@ end
 local _AntiTrashDebuff = {}
 
 function AntiTrashDebuff(enabled)
-	ClearConnections(_AntiBlockDebuff)
-	
+	ClearConnections(_AntiTrashDebuff)
+
 	local trashIds = {
-		13814919604, -- equip
-		13813448561, -- equip inf animation
-		13813955149 -- throw
+		13814919604,
+		13813448561,
+		13813955149
 	}
-	
+
 	if enabled then
+		local TempConn = {}
+
 		AddConnection(Character.ChildAdded:Connect(function(obj)
-			if obj.Name == "Trash Can" then
-				repeat
+			if obj.Name ~= "Trash Can" then return end
+
+			AddConnection(Animator.AnimationPlayed:Connect(function(track)
+				if Character:FindFirstChild("Trash Can") then
+					for _, id in trashIds do
+						if track.Animation.AnimationId == "rbxassetid://" .. id then
+							track:Stop()
+							break
+						end
+					end
+				end
+			end), TempConn)
+
+			task.spawn(function()
+				while obj.Parent == Character do
 					task.wait()
 
-					pcall(function()
-						local freeze = Character:FindFirstChild("Freeze")
+					if obj.Parent ~= Character then break end
+					
+					local freeze = Character:FindFirstChild("Freeze")
+					if freeze then
+						freeze:Destroy()
+					end
 
-						if freeze and obj then
-							freeze:Destroy()
-						end
-
-						obj.Massless = true
-					end)
-				until obj.Massless == true and not obj
-			end
+					obj.Massless = true
+				end
+			end)
 		end), _AntiTrashDebuff)
 
-		AddConnection(Animator.AnimationPlayed:Connect(function(track)
-			for _, id in trashIds do
-				if track.Animation.AnimationId == "rbxassetid://" .. id then
-					track:Stop()
-					break
-				end
+		AddConnection(Character.ChildRemoved:Connect(function(obj)
+			if obj.Name == "Trash Can" then
+				ClearConnections(TempConn)
 			end
 		end), _AntiTrashDebuff)
 	end
