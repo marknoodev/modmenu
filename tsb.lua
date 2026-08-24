@@ -594,11 +594,52 @@ local _GlassBody = {}
 
 function GlassBody(enabled)
 	ClearConnections(_GlassBody)
-	
+
 	if enabled then
 		AddConnection(Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
 			Humanoid.Health = 0
 		end), _GlassBody)
+	end
+end
+
+local _AntiTrashDebuff = {}
+
+function AntiTrashDebuff(enabled)
+	ClearConnections(_AntiBlockDebuff)
+	
+	local trashIds = {
+		13814919604, -- equip
+		13813448561, -- equip inf animation
+		13813955149 -- throw
+	}
+	
+	if enabled then
+		AddConnection(Character.ChildAdded:Connect(function(obj)
+			if obj.Name == "Trash Can" then
+				repeat
+					task.wait()
+
+					pcall(function()
+						local freeze = Character:FindFirstChild("Freeze")
+
+						if freeze and obj then
+							freeze:Destroy()
+						end
+
+						obj.Massless = true
+					end)
+				until obj.Massless == true and not obj
+			end
+		end), _AntiTrashDebuff)
+
+		AddConnection(Animator.AnimationPlayed:Connect(function(track)
+			for _, id in trashIds do
+				if track.Animation.AnimationId == "rbxassetid://" .. id then
+					track:Stop()
+					break
+				end
+			end
+		end), _AntiTrashDebuff)
 	end
 end
 
@@ -607,7 +648,8 @@ Player.CharacterAdded:Connect(function(char)
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-	
+
+	AntiTrashDebuff(isEnabled(_AntiTrashDebuff))
 	GlassBody(isEnabled(_GlassBody))
 	FloatWhileSemiRagolled(isEnabled(_FloatWhileSemiRagolled))
 	InvisibleTableflip(isEnabled(_InvisibleTableflip))
@@ -629,8 +671,12 @@ local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/rel
 local Window = WindUI:CreateWindow({
 	Title = "Seitium Hub",
 	Icon = "eye",
+	Folder = "Seitium",
 	Author = "all scripts made by infernus",
 })
+
+local ConfigManager = Window.ConfigManager
+local Config = ConfigManager:CreateConfig("data")
 
 --// PLAYER \\--
 local Player_Tab = Window:Tab({
@@ -646,6 +692,7 @@ local TPBackwards_Section = Player_Tab:Section({
 
 local TPBackwards_Toggle = TPBackwards_Section:Toggle({
 	Title = "TP Backwards",
+	Flag = "TPBackwards",
 	Callback = function(state)
 		_TPBackwards = state
 	end,
@@ -654,6 +701,7 @@ local TPBackwards_Toggle = TPBackwards_Section:Toggle({
 TPBackwards_Section:Keybind({
 	Title = "Keybind",
 	Value = "R",
+	Flag = "TPBackwardsKeybind",
 	Callback = function()
 		TPBackwards()
 	end,
@@ -667,6 +715,7 @@ local FreezeMidAir_Section = Player_Tab:Section({
 
 local FreezeMidAir_Toggle = FreezeMidAir_Section:Toggle({
 	Title = "Freeze Mid Air",
+	Flag = "FreezeMidAir",
 	Callback = function(state)
 		_FreezeMidAir = state
 	end,
@@ -688,6 +737,7 @@ local Reset_Section = Player_Tab:Section({
 
 local Reset_Toggle = Reset_Section:Toggle({
 	Title = "Reset",
+	Flag = "Reset",
 	Callback = function(state)
 		_Reset = state
 	end,
@@ -696,13 +746,23 @@ local Reset_Toggle = Reset_Section:Toggle({
 Reset_Section:Keybind({
 	Title = "Keybind",
 	Value = "R",
+	Flag = "ResetKeybind",
 	Callback = function()
 		Reset()
 	end,
 })
 
+local AntiTrashDebuff_Toggle = Player_Tab:Toggle({
+	Title = "Anti Trash Debuff",
+	Flag = "AntiTrashDebuff",
+	Callback = function(state)
+		AntiTrashDebuff(state)
+	end,
+})
+
 local GlassBody_Toggle = Player_Tab:Toggle({
 	Title = "Glass Body",
+	Flag = "GlassBody",
 	Callback = function(state)
 		GlassBody(state)
 	end,
@@ -710,20 +770,15 @@ local GlassBody_Toggle = Player_Tab:Toggle({
 
 local FloatWhileSemiRagdolled_Toggle = Player_Tab:Toggle({
 	Title = "Float While Semi Ragolled",
+	Flag = "FloatWhileSemiRagdolled",
 	Callback = function(state)
 		FloatWhileSemiRagdolled(state)
 	end,
 })
 
-local AntiDC_Toggle = Player_Tab:Toggle({
-	Title = "Anti Death Counter",
-	Callback = function(state)
-		AntiDC(state)
-	end,
-})
-
 local DisablePlayerCollision_Toggle = Player_Tab:Toggle({
 	Title = "Disable Player Collision",
+	Flag = "DisablePlayerCollision",
 	Callback = function(state)
 		DisablePlayerCollision(state)
 	end,
@@ -731,6 +786,7 @@ local DisablePlayerCollision_Toggle = Player_Tab:Toggle({
 
 local EmoteSideDash_Toggle = Player_Tab:Toggle({
 	Title = "Emote While Side Dashing",
+	Flag = "EmoteWhileSideDashing",
 	Callback = function(state)
 		EmoteWhileDash(state)
 	end,
@@ -738,6 +794,7 @@ local EmoteSideDash_Toggle = Player_Tab:Toggle({
 
 local RemoveEmoteFreeze_Toggle = Player_Tab:Toggle({
 	Title = "Remove Emote Freeze",
+	Flag = "RemoveEmoteFreeze",
 	Callback = function(state)
 		RemoveEmoteFreeze(state)
 	end,
@@ -745,6 +802,7 @@ local RemoveEmoteFreeze_Toggle = Player_Tab:Toggle({
 
 local ForceAutoRotate_Toggle = Player_Tab:Toggle({
 	Title = "Force AutoRotate",
+	Flag = "ForceAutoRotate",
 	Callback = function(state)
 		ForceAutoRotate(state)
 	end,
@@ -752,6 +810,7 @@ local ForceAutoRotate_Toggle = Player_Tab:Toggle({
 
 local AntiBlockDebuff_Toggle = Player_Tab:Toggle({
 	Title = "Anti Block Debuff",
+	Flag = "AntiBlockDebuff",
 	Callback = function(state)
 		AntiBlockDebuff(state)
 	end,
@@ -765,8 +824,17 @@ local Combat_Tab = Window:Tab({
 
 local M1Reset_Toggle = Combat_Tab:Toggle({
 	Title = "M1 Reset",
+	Flag = "M1Reset",
 	Callback = function(state)
 		M1Reset(state)
+	end,
+})
+
+local AntiDC_Toggle = Combat_Tab:Toggle({
+	Title = "Anti Death Counter",
+	Flag = "AntiDeathCounter",
+	Callback = function(state)
+		AntiDC(state)
 	end,
 })
 
@@ -778,6 +846,7 @@ local Visuals_Tab = Window:Tab({
 
 local CounterVisualizer_Toggle = Visuals_Tab:Toggle({
 	Title = "Counter Visualizer",
+	Flag = "CounterVisualizer",
 	Callback = function(state)
 		CounterVisualizer(state)
 	end,
@@ -785,6 +854,7 @@ local CounterVisualizer_Toggle = Visuals_Tab:Toggle({
 
 local InvisibleTableflip_Toggle = Visuals_Tab:Toggle({
 	Title = "Invisible Tableflip",
+	Flag = "InvisibleTableflip",
 	Callback = function(state)
 		InvisibleTableflip(state)
 	end,
@@ -792,6 +862,7 @@ local InvisibleTableflip_Toggle = Visuals_Tab:Toggle({
 
 local NoCutscene_Toggle = Visuals_Tab:Toggle({
 	Title = "No Cutscene",
+	Flag = "NoCutscene",
 	Callback = function(state)
 		NoCutscene(state)
 	end,
@@ -799,6 +870,7 @@ local NoCutscene_Toggle = Visuals_Tab:Toggle({
 
 local KorbloxHeadless_Toggle = Visuals_Tab:Toggle({
 	Title = "Korblox + Headless",
+	Flag = "KorbloxHeadless",
 	Callback = function(state)
 		KorbloxHeadless(state)
 	end,
@@ -806,6 +878,7 @@ local KorbloxHeadless_Toggle = Visuals_Tab:Toggle({
 
 local HideBlockAnim_Toggle = Visuals_Tab:Toggle({
 	Title = "Hide Block Animations",
+	Flag = "HideBlockAnimations",
 	Callback = function(state)
 		HideBlockAnims(state)
 	end,
@@ -825,6 +898,7 @@ local Lay_Section = Miscellaneous_Tab:Section({
 
 local Lay_Toggle = Lay_Section:Toggle({
 	Title = "Lay",
+	Flag = "Lay",
 	Callback = function(state)
 		_Lay = state
 	end,
@@ -833,8 +907,16 @@ local Lay_Toggle = Lay_Section:Toggle({
 Lay_Section:Keybind({
 	Title = "Keybind",
 	Value = "Z",
+	Flag = "LayKeybind",
 	Callback = function()
 		Lay()
+	end,
+})
+
+local InfiniteYield_Button = Miscellaneous_Tab:Button({
+	Title = "Infinite Yield",
+	Callback = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
 	end,
 })
 
@@ -875,9 +957,31 @@ local Config_Tab = Window:Tab({
 	Icon = "settings"
 })
 
+local Data_Section = Config_Tab:Section({
+	Title = "Data Config",
+	Box = true,
+	BoxBorder = true,
+})
+
+local DataSave_Button = Data_Section:Button({
+	Title = "Save Data",
+	Callback = function()
+		Config:Save()
+	end,
+})
+
+local DataLoad_Button = Data_Section:Button({
+	Title = "Load Data",
+	Callback = function()
+		Config:Load()
+	end,
+})
+
+
 Config_Tab:Keybind({
 	Title = "Show/Hide Menu",
 	Value = "Insert",
+	Flag = "ShowHideMenuKeybind",
 	Callback = function(v)
 		Window:SetToggleKey(Enum.KeyCode[v])
 	end,
