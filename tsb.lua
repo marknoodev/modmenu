@@ -493,7 +493,7 @@ function InvisibleTableflip(enabled)
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "Table Flip" then
 				local stoppedTableflip = false
-				
+
 				for _, track in Animator:GetPlayingAnimationTracks() do
 					if track.Animation.AnimationId == "rbxassetid://11365563255" then
 						track:Stop()
@@ -501,9 +501,9 @@ function InvisibleTableflip(enabled)
 						break
 					end
 				end
-				
+
 				local TempConn = {}
-				
+
 				if not stoppedTableflip then
 					AddConnection(Animator.AnimationPlayed:Connect(function(track)
 						if track.Animation.AnimationId == "rbxassetid://11365563255" then
@@ -512,14 +512,14 @@ function InvisibleTableflip(enabled)
 						end
 					end), TempConn)
 				end
-			
+
 				local list = {
 					"AntiMove",
 					"Freeze",
 					"HeavyBody",
 					"NoRotate"
 				}
-			
+
 				local oldPos = nil
 
 				local totalDeleted = 0
@@ -587,6 +587,18 @@ function FloatWhileSemiRagolled(enabled)
 				Humanoid.HipHeight = 0
 			end
 		end), _FloatWhileSemiRagolled)
+	end
+end
+
+local _GlassBody = {}
+
+function GlassBody(enabled)
+	ClearConnections(_GlassBody)
+	
+	if enabled then
+		AddConnection(Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
+			Humanoid.Health = 0
+		end), _GlassBody)
 	end
 end
 
@@ -685,6 +697,13 @@ Reset_Section:Keybind({
 	Value = "R",
 	Callback = function()
 		Reset()
+	end,
+})
+
+local GlassBody_Toggle = Player_Tab:Toggle({
+	Title = "Glass Body",
+	Callback = function(state)
+		GlassBody(state)
 	end,
 })
 
