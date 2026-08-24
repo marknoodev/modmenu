@@ -607,7 +607,8 @@ Player.CharacterAdded:Connect(function(char)
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-
+	
+	GlassBody(isEnabled(_GlassBody))
 	FloatWhileSemiRagolled(isEnabled(_FloatWhileSemiRagolled))
 	InvisibleTableflip(isEnabled(_InvisibleTableflip))
 	DisablePlayerCollision(isEnabled(_DisablePlayerCollision))
