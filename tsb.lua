@@ -383,36 +383,37 @@ local _RemoveEmoteFreeze = {}
 function RemoveEmoteFreeze(enabled)
 	ClearConnections(_RemoveEmoteFreeze)
 
+	local EmoteFreezeExists = false
+
 	if enabled then
-		local TempConn = {}
-
 		AddConnection(Character.ChildAdded:Connect(function(obj)
-			if obj.Name == "DoingEmote" and obj:IsA("Accessory") then
-				if Character:FindFirstChild("DoingEmote") then
-					local freeze = Character:WaitForChild("Freeze")
-					freeze:Destroy()
-				end
+			if obj.Name == "DoingEmote" then
+				EmoteFreezeExists = true
+				local deletedFreeze = false
 
-				AddConnection(Animator.AnimationPlayed:Connect(function(track)
-					if track.Animation.AnimationId == "rbxassetid://7815618175" then
-						if Character:FindFirstChild("DoingEmote") then
-							track:Stop()
-						end
-					end
-				end), TempConn)
+				repeat task.wait()
+					if not EmoteFreezeExists then break end
 
-				local currentTrack = Animator:GetPlayingAnimationTracks()[1]
-				if currentTrack.Animation.AnimationId == "rbxassetid://7815618175" then
-					if Character:FindFirstChild("DoingEmote") then
-						currentTrack:Stop()
+					local freeze = Character:FindFirstChild("Freeze")
+					if freeze then
+						freeze:Destroy()
+						deletedFreeze = true
 					end
-				end
+				until deletedFreeze == true
 			end
 		end), _RemoveEmoteFreeze)
-
+		
 		AddConnection(Character.ChildRemoved:Connect(function(obj)
-			if obj.Name == "DoingEmote" and obj:IsA("Accessory") then
-				ClearConnections(TempConn)
+			if obj.Name == "DoingEmote" then
+				EmoteFreezeExists = false
+			end
+		end), _RemoveEmoteFreeze)
+		
+		AddConnection(Animator.AnimationPlayed:Connect(function(track)
+			if track.Animation.AnimationId == "rbxassetid://7815618175" then
+				if EmoteFreezeExists then
+					track:Stop()
+				end
 			end
 		end), _RemoveEmoteFreeze)
 	end
