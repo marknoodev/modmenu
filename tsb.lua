@@ -608,47 +608,35 @@ function AntiTrashDebuff(enabled)
 	ClearConnections(_AntiTrashDebuff)
 
 	local trashIds = {
-		13814919604,
-		13813448561,
-		13813955149
+		13814919604, -- get
+		13813448561, -- get (endless)
+		13813955149 -- throw
 	}
 
 	if enabled then
-		local TempConn = {}
+		AddConnection(Animator.AnimationPlayed:Connect(function(track)
+			for _, id in trashIds do
+				if track.Animation.AnimationId == "rbxassetid://" .. id then
+					track:Stop()
 
-		AddConnection(Character.ChildAdded:Connect(function(obj)
-			if obj.Name ~= "Trash Can" then return end
-
-			AddConnection(Animator.AnimationPlayed:Connect(function(track)
-				if Character:FindFirstChild("Trash Can") then
-					for _, id in trashIds do
-						if track.Animation.AnimationId == "rbxassetid://" .. id then
-							track:Stop()
-							break
-						end
-					end
-				end
-			end), TempConn)
-
-			task.spawn(function()
-				while obj.Parent == Character do
-					task.wait()
-
-					if obj.Parent ~= Character then break end
-					
-					local freeze = Character:FindFirstChild("Freeze")
-					if freeze then
-						freeze:Destroy()
+					if Character:FindFirstChild("Freeze") then
+						Character.Freeze:Destroy()
 					end
 
-					obj.Massless = true
+					break
 				end
-			end)
+			end
 		end), _AntiTrashDebuff)
-
-		AddConnection(Character.ChildRemoved:Connect(function(obj)
+		
+		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "Trash Can" then
-				ClearConnections(TempConn)
+				local deletedTrashCan = false
+				
+				repeat task.wait()
+					pcall(function()
+						obj.Massless = true
+					end)
+				until obj.Massless == true
 			end
 		end), _AntiTrashDebuff)
 	end
