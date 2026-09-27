@@ -402,13 +402,13 @@ function RemoveEmoteFreeze(enabled)
 				until deletedFreeze == true
 			end
 		end), _RemoveEmoteFreeze)
-		
+
 		AddConnection(Character.ChildRemoved:Connect(function(obj)
 			if obj.Name == "DoingEmote" then
 				EmoteFreezeExists = false
 			end
 		end), _RemoveEmoteFreeze)
-		
+
 		AddConnection(Animator.AnimationPlayed:Connect(function(track)
 			if track.Animation.AnimationId == "rbxassetid://7815618175" then
 				if EmoteFreezeExists then
@@ -628,11 +628,11 @@ function AntiTrashDebuff(enabled)
 				end
 			end
 		end), _AntiTrashDebuff)
-		
+
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "Trash Can" then
 				local deletedTrashCan = false
-				
+
 				repeat task.wait()
 					pcall(function()
 						obj.Massless = true
@@ -643,12 +643,73 @@ function AntiTrashDebuff(enabled)
 	end
 end
 
+local _BlockingAssistant = {}
+
+function BlockingAssistant(enabled)
+	ClearConnections(_BlockingAssistant)
+	
+	if enabled then
+		if not Character:GetAttribute("Blocking") then
+			Character:SetAttribute("Blocking")
+		end
+		
+		local runConn = {}
+		
+		AddConnection(Character:GetAttributeChangedSignal("Blocking"):Connect(function()
+			local isBlocking = Character:GetAttribute("Blocking")
+			if isBlocking then
+				AddConnection(RunService.Heartbeat:Connect(function()
+					Humanoid.AutoRotate = false
+					
+					local nearestEnemy = nil
+					local nearestDist = math.huge
+					
+					for _, v in workspace.Live:GetChildren() do
+						if v.Name == "Weakest Dummy" then continue end
+						if v == Character then continue end
+						
+						local hrp = v:FindFirstChild("HumanoidRootPart")
+						if hrp then
+							if (hrp.Position - HumanoidRootPart.Position).Magnitude < nearestDist then
+								nearestDist = (hrp.Position - HumanoidRootPart.Position).Magnitude
+								nearestEnemy = v
+							end
+						end
+					end
+					
+					if nearestEnemy then
+						local hrp = nearestEnemy:FindFirstChild("HumanoidRootPart")
+						if hrp then
+							local enemyPos = hrp.Position
+							
+							local validPos = Vector3.new(
+								enemyPos.X,
+								HumanoidRootPart.Position.Y,
+								enemyPos.Z
+							)
+							
+							HumanoidRootPart.CFrame = CFrame.lookAt(HumanoidRootPart.Position, validPos)
+						end
+					end
+				end), runConn)
+			else
+				if next(runConn) then
+					Humanoid.AutoRotate = true
+					
+					ClearConnections(runConn)
+				end
+			end
+		end), _BlockingAssistant)
+	end
+end
+
 Player.CharacterAdded:Connect(function(char)
 	Character = char
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-
+	
+	BlockingAssistant(isEnabled(_BlockingAssistant))
 	AntiTrashDebuff(isEnabled(_AntiTrashDebuff))
 	GlassBody(isEnabled(_GlassBody))
 	FloatWhileSemiRagolled(isEnabled(_FloatWhileSemiRagolled))
@@ -835,6 +896,14 @@ local AntiDC_Toggle = Combat_Tab:Toggle({
 	Flag = "AntiDeathCounter",
 	Callback = function(state)
 		AntiDC(state)
+	end,
+})
+
+local BlockingAssistant_Toggle = Combat_Tab:Toggle({
+	Title = "Blocking Assistant",
+	Flag = "BlockingAssistant",
+	Callback = function(state)
+		BlockingAssistant(state)
 	end,
 })
 
