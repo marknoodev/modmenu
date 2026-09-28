@@ -2,6 +2,8 @@ local UserInputService = game:GetService("UserInputService")
 local ContentProvider = game:GetService("ContentProvider")
 local RunService = game:GetService("RunService")
 local TeleportService = game:GetService("TeleportService")
+local ContextActionService = game:GetService("ContextActionService")
+local StarterGui = game:GetService("StarterGui")
 
 local Player = game.Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
@@ -647,27 +649,27 @@ local _BlockingAssistant = {}
 
 function BlockingAssistant(enabled)
 	ClearConnections(_BlockingAssistant)
-	
+
 	if enabled then
 		if not Character:GetAttribute("Blocking") then
 			Character:SetAttribute("Blocking")
 		end
-		
+
 		local runConn = {}
-		
+
 		AddConnection(Character:GetAttributeChangedSignal("Blocking"):Connect(function()
 			local isBlocking = Character:GetAttribute("Blocking")
 			if isBlocking then
 				AddConnection(RunService.Heartbeat:Connect(function()
 					Humanoid.AutoRotate = false
-					
+
 					local nearestEnemy = nil
 					local nearestDist = math.huge
-					
+
 					for _, v in workspace.Live:GetChildren() do
 						if v.Name == "Weakest Dummy" then continue end
 						if v == Character then continue end
-						
+
 						local hrp = v:FindFirstChild("HumanoidRootPart")
 						if hrp then
 							if (hrp.Position - HumanoidRootPart.Position).Magnitude < nearestDist then
@@ -676,18 +678,18 @@ function BlockingAssistant(enabled)
 							end
 						end
 					end
-					
+
 					if nearestEnemy then
 						local hrp = nearestEnemy:FindFirstChild("HumanoidRootPart")
 						if hrp then
 							local enemyPos = hrp.Position
-							
+
 							local validPos = Vector3.new(
 								enemyPos.X,
 								HumanoidRootPart.Position.Y,
 								enemyPos.Z
 							)
-							
+
 							HumanoidRootPart.CFrame = CFrame.lookAt(HumanoidRootPart.Position, validPos)
 						end
 					end
@@ -695,11 +697,298 @@ function BlockingAssistant(enabled)
 			else
 				if next(runConn) then
 					Humanoid.AutoRotate = true
-					
+
 					ClearConnections(runConn)
 				end
 			end
 		end), _BlockingAssistant)
+	end
+end
+
+local _Freecam = false
+local FreecamActive = false
+
+local CameraPosition
+local CameraRotation = Vector2.zero
+
+local MOVE_SPEED = 50
+local FAST_SPEED = 150
+local MOUSE_SENSITIVITY = 0.0025
+
+local SavedGuiStates = {}
+local PreviousMouseIconEnabled
+
+local PreviousCameraType
+local PreviousCameraSubject
+local PreviousMouseBehavior
+
+local FreecamConnections = {}
+
+local INPUT_BLOCK_NAME = "Freecam_BlockInputs"
+
+--------------------------------------------------
+-- BLOQUEAR INPUTS DO PERSONAGEM
+--------------------------------------------------
+
+local function BlockPlayerInput()
+	return Enum.ContextActionResult.Sink
+end
+
+local function BlockAllInputs()
+	ContextActionService:BindActionAtPriority(
+		INPUT_BLOCK_NAME,
+		BlockPlayerInput,
+		false,
+		Enum.ContextActionPriority.High.Value,
+
+		Enum.KeyCode.W,
+		Enum.KeyCode.A,
+		Enum.KeyCode.S,
+		Enum.KeyCode.D,
+
+		Enum.KeyCode.Space,
+		Enum.KeyCode.LeftShift,
+		Enum.KeyCode.LeftControl,
+
+		Enum.KeyCode.Q,
+		Enum.KeyCode.E,
+
+		Enum.UserInputType.MouseButton1,
+		Enum.UserInputType.MouseButton2,
+		Enum.UserInputType.MouseButton3,
+
+		Enum.UserInputType.Gamepad1
+	)
+end
+
+local function UnblockAllInputs()
+	ContextActionService:UnbindAction(INPUT_BLOCK_NAME)
+end
+
+--------------------------------------------------
+-- START
+--------------------------------------------------
+
+local function StartFreecam()
+	if FreecamActive then
+		return
+	end
+	
+	FreecamActive = true
+	
+	Camera = workspace.CurrentCamera
+	
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+	
+	PreviousCameraType = Camera.CameraType
+	PreviousCameraSubject = Camera.CameraSubject
+	PreviousMouseBehavior = UserInputService.MouseBehavior
+	
+	PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
+
+	table.clear(SavedGuiStates)
+
+	for _, Gui in ipairs(Player.PlayerGui:GetChildren()) do
+		if Gui:IsA("ScreenGui") then
+			SavedGuiStates[Gui] = Gui.Enabled
+			Gui.Enabled = false
+		end
+	end
+
+	UserInputService.MouseIconEnabled = false
+	
+	CameraPosition = Camera.CFrame.Position
+
+	local LookVector = Camera.CFrame.LookVector
+
+	local Yaw = math.atan2(
+		-LookVector.X,
+		-LookVector.Z
+	)
+
+	local Pitch = math.asin(
+		math.clamp(
+			LookVector.Y,
+			-1,
+			1
+		)
+	)
+
+	CameraRotation = Vector2.new(
+		Pitch,
+		Yaw
+	)
+
+	Camera.CameraType = Enum.CameraType.Scriptable
+
+	UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+
+	BlockAllInputs()
+
+	--------------------------------------------------
+	-- MOUSE
+	--------------------------------------------------
+
+	AddConnection(
+		UserInputService.InputChanged:Connect(function(input)
+
+			if not FreecamActive then
+				return
+			end
+
+			if input.UserInputType ~= Enum.UserInputType.MouseMovement then
+				return
+			end
+
+			local Pitch = CameraRotation.X
+			local Yaw = CameraRotation.Y
+
+			Yaw -= input.Delta.X * MOUSE_SENSITIVITY
+			Pitch -= input.Delta.Y * MOUSE_SENSITIVITY
+
+			Pitch = math.clamp(
+				Pitch,
+				-math.rad(89),
+				math.rad(89)
+			)
+
+			CameraRotation = Vector2.new(
+				Pitch,
+				Yaw
+			)
+		end),
+		FreecamConnections
+	)
+
+	--------------------------------------------------
+	-- MOVIMENTO DA CÂMERA
+	--------------------------------------------------
+
+	AddConnection(
+		RunService.RenderStepped:Connect(function(deltaTime)
+
+			if not FreecamActive then
+				return
+			end
+
+			local Pitch = CameraRotation.X
+			local Yaw = CameraRotation.Y
+
+			local Rotation = CFrame.fromOrientation(
+				Pitch,
+				Yaw,
+				0
+			)
+
+			local Movement = Vector3.zero
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+				Movement += Vector3.new(0, 0, -1)
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+				Movement += Vector3.new(0, 0, 1)
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+				Movement += Vector3.new(-1, 0, 0)
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+				Movement += Vector3.new(1, 0, 0)
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.E) then
+				Movement += Vector3.new(0, 1, 0)
+			end
+
+			if UserInputService:IsKeyDown(Enum.KeyCode.Q) then
+				Movement += Vector3.new(0, -1, 0)
+			end
+
+			if Movement.Magnitude > 0 then
+
+				Movement = Movement.Unit
+
+				local Speed = MOVE_SPEED
+
+				if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+					Speed = FAST_SPEED
+				end
+
+				local MoveVector =
+					Rotation:VectorToWorldSpace(Movement)
+
+				CameraPosition +=
+					MoveVector
+					* Speed
+					* deltaTime
+			end
+
+			Camera.CFrame =
+				CFrame.new(CameraPosition)
+				* Rotation
+		end),
+		FreecamConnections
+	)
+end
+
+--------------------------------------------------
+-- STOP
+--------------------------------------------------
+
+local function StopFreecam()
+	if not FreecamActive then
+		return
+	end
+
+	FreecamActive = false
+	
+	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, true)
+	
+	ClearConnections(FreecamConnections)
+	UnblockAllInputs()
+
+	Camera.CameraType = PreviousCameraType or Enum.CameraType.Custom
+	Camera.CameraSubject = PreviousCameraSubject
+
+	UserInputService.MouseBehavior =
+		PreviousMouseBehavior or Enum.MouseBehavior.Default
+
+	UserInputService.MouseIconEnabled =
+		PreviousMouseIconEnabled ~= nil
+		and PreviousMouseIconEnabled
+		or true
+
+	for Gui, WasEnabled in pairs(SavedGuiStates) do
+		if Gui and Gui.Parent then
+			Gui.Enabled = WasEnabled
+		end
+	end
+
+	table.clear(SavedGuiStates)
+
+	UserInputService.MouseIconEnabled =
+		PreviousMouseIconEnabled ~= nil
+		and PreviousMouseIconEnabled
+		or true
+end
+
+--------------------------------------------------
+-- TOGGLE DA FREECAM
+--------------------------------------------------
+
+function Freecam()
+
+	-- Toggle principal está desligado
+	if not _Freecam then
+		return
+	end
+
+	if FreecamActive then
+		StopFreecam()
+	else
+		StartFreecam()
 	end
 end
 
@@ -708,7 +997,7 @@ Player.CharacterAdded:Connect(function(char)
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-	
+
 	BlockingAssistant(isEnabled(_BlockingAssistant))
 	AntiTrashDebuff(isEnabled(_AntiTrashDebuff))
 	GlassBody(isEnabled(_GlassBody))
@@ -911,6 +1200,29 @@ local BlockingAssistant_Toggle = Combat_Tab:Toggle({
 local Visuals_Tab = Window:Tab({
 	Title = "Visuals",
 	Icon = "eye"
+})
+
+local Freecam_Section = Visuals_Tab:Section({
+	Title = "Freecam Config",
+	Box = true,
+	BoxBorder = true,
+})
+
+local Freecam_Toggle = Freecam_Section:Toggle({
+	Title = "Freecam",
+	Flag = "Freecam",
+	Callback = function(state)
+		_Freecam = state
+	end,
+})
+
+Freecam_Section:Keybind({
+	Title = "Keybind",
+	Value = "V",
+	Flag = "FreecamKeybind",
+	Callback = function()
+		Freecam()
+	end,
 })
 
 local CounterVisualizer_Toggle = Visuals_Tab:Toggle({
