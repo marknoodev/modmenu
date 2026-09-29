@@ -773,17 +773,17 @@ local function StartFreecam()
 	if FreecamActive then
 		return
 	end
-	
+
 	FreecamActive = true
-	
+
 	Camera = workspace.CurrentCamera
-	
+
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
-	
+
 	PreviousCameraType = Camera.CameraType
 	PreviousCameraSubject = Camera.CameraSubject
 	PreviousMouseBehavior = UserInputService.MouseBehavior
-	
+
 	PreviousMouseIconEnabled = UserInputService.MouseIconEnabled
 
 	table.clear(SavedGuiStates)
@@ -796,7 +796,7 @@ local function StartFreecam()
 	end
 
 	UserInputService.MouseIconEnabled = false
-	
+
 	CameraPosition = Camera.CFrame.Position
 
 	local LookVector = Camera.CFrame.LookVector
@@ -943,9 +943,9 @@ local function StopFreecam()
 	end
 
 	FreecamActive = false
-	
+
 	StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, true)
-	
+
 	ClearConnections(FreecamConnections)
 	UnblockAllInputs()
 
@@ -989,6 +989,33 @@ function Freecam()
 		StopFreecam()
 	else
 		StartFreecam()
+	end
+end
+
+local _UltraInstinct = {}
+
+local TP_DIST = 15 -- studs
+
+function UltraInstinct(enabled)
+	ClearConnections(_UltraInstinct)
+	
+	if enabled then
+		if not Character:GetAttribute("LastDamage") then
+			Character:SetAttribute("LastDamage", tick())
+		end
+		
+		AddConnection(Character:GetAttributeChangedSignal("LastDamage"):Connect(function()
+			local Angle = math.random() * math.pi * 2
+			local Distance = math.random() * TP_DIST
+
+			local Offset = Vector3.new(
+				math.cos(Angle) * Distance,
+				0,
+				math.sin(Angle) * Distance
+			)
+
+			HumanoidRootPart.CFrame = CFrame.new(HumanoidRootPart.Position + Offset)
+		end), _UltraInstinct)
 	end
 end
 
@@ -1163,6 +1190,14 @@ local AntiBlockDebuff_Toggle = Player_Tab:Toggle({
 	Flag = "AntiBlockDebuff",
 	Callback = function(state)
 		AntiBlockDebuff(state)
+	end,
+})
+
+local UltraInstinct_Toggle = Player_Tab:Toggle({
+	Title = "Ultra Instinct",
+	Flag = "UltraInstinct",
+	Callback = function(state)
+		UltraInstinct(state)
 	end,
 })
 
