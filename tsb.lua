@@ -577,19 +577,21 @@ function Reset()
 	end
 end
 
-local _FloatWhileSemiRagolled = {}
+local _FloatWhileSemiRagdolled = {}
 
-function FloatWhileSemiRagolled(enabled)
-	ClearConnections(_FloatWhileSemiRagolled)
+function FloatWhileSemiRagdolled(enabled)
+	ClearConnections(_FloatWhileSemiRagdolled)
 
 	if enabled then
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "BeingLaunched" then -- start
+				print("beinglaunched")
 				Humanoid.HipHeight = 4
 			elseif obj.Name == "LaunchEnded" then -- end
+				print("launchended")
 				Humanoid.HipHeight = 0
 			end
-		end), _FloatWhileSemiRagolled)
+		end), _FloatWhileSemiRagdolled)
 	end
 end
 
@@ -998,12 +1000,12 @@ local TP_DIST = 15 -- studs
 
 function UltraInstinct(enabled)
 	ClearConnections(_UltraInstinct)
-	
+
 	if enabled then
 		if not Character:GetAttribute("LastDamage") then
 			Character:SetAttribute("LastDamage", tick())
 		end
-		
+
 		AddConnection(Character:GetAttributeChangedSignal("LastDamage"):Connect(function()
 			local Angle = math.random() * math.pi * 2
 			local Distance = math.random() * TP_DIST
@@ -1019,16 +1021,29 @@ function UltraInstinct(enabled)
 	end
 end
 
+local _SlideVelocity = {}
+
+local SlideVelocityMultiplier = 1
+
+function SlideVelocity(enabled)
+	ClearConnections(_SlideVelocity)
+	
+	if enabled then
+		
+	end
+end
+
 Player.CharacterAdded:Connect(function(char)
 	Character = char
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-
+	
+	SlideVelocity(isEnabled(_SlideVelocity))
 	BlockingAssistant(isEnabled(_BlockingAssistant))
 	AntiTrashDebuff(isEnabled(_AntiTrashDebuff))
 	GlassBody(isEnabled(_GlassBody))
-	FloatWhileSemiRagolled(isEnabled(_FloatWhileSemiRagolled))
+	FloatWhileSemiRagdolled(isEnabled(_FloatWhileSemiRagdolled))
 	InvisibleTableflip(isEnabled(_InvisibleTableflip))
 	DisablePlayerCollision(isEnabled(_DisablePlayerCollision))
 	RemoveEmoteFreeze(isEnabled(_RemoveEmoteFreeze))
@@ -1059,6 +1074,35 @@ local Config = ConfigManager:CreateConfig("data")
 local Player_Tab = Window:Tab({
 	Title = "Player",
 	Icon = "user"
+})
+
+local SlideVelocity_Section = Player_Tab:Section({
+	Title = "Dashes Velocity Config",
+	Box = true,
+	BoxBorder = true,
+})
+
+local SlideVelocity_Toggle = SlideVelocity_Section:Toggle({
+	Title = "Dashes Velocity",
+	Flag = "DashesVelocity",
+	Callback = function(state)
+		-- need to add
+	end,
+})
+
+local SlideVelocity_Slider = SlideVelocity_Section:Slider({
+	Title = "Multiplier",
+	Step = 0.01,
+	
+	Value = {
+		Min = 1,
+		Max = 2,
+		Default = 1.05,
+	},
+	
+	Callback = function(value)
+		SlideVelocityMultiplier = value
+	end,
 })
 
 local TPBackwards_Section = Player_Tab:Section({
@@ -1199,7 +1243,7 @@ local UltraInstinct_Toggle = Player_Tab:Toggle({
 	Callback = function(state)
 		UltraInstinct(state)
 	end,
-})
+}) 
 
 --// COMBAT \\-
 local Combat_Tab = Window:Tab({
