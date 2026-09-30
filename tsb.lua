@@ -1025,21 +1025,51 @@ local _SlideVelocity = {}
 
 local SlideVelocityMultiplier = 1.05
 
+local function connectVelocity(instance: BodyVelocity)
+	local tempConns = {}
+	
+	local changingVelocity = false
+	
+	AddConnection(instance:GetPropertyChangedSignal("Velocity"):Connect(function()
+		if changingVelocity then
+			return
+		end
+		
+		local vel = instance.Velocity
+		
+		if vel.Magnitude <= 0 then
+			return
+		end
+		
+		changingVelocity = true
+		
+		instance.Velocity = vel * SlideVelocityMultiplier
+		
+		changingVelocity = false
+	end), tempConns)
+
+	AddConnection(instance.Destroying:Once(function()
+		if next(tempConns) then
+			ClearConnections(tempConns)
+		end
+	end), tempConns)
+end
+
+local velList = {
+	"velocity",
+	"dodgevelocity",
+	"moveme"
+}
+
 function SlideVelocity(enabled)
 	ClearConnections(_SlideVelocity)
-	
+
 	if enabled then
-		AddConnection(RunService.Heartbeat:Connect(function()
-			local sideback: BodyVelocity = HumanoidRootPart:FindFirstChild("velocity")
-			
-			if sideback then
-				sideback.Velocity *= SlideVelocityMultiplier
-			end
-			
-			local front: BodyVelocity = HumanoidRootPart:FindFirstChild("moveme") 
-			
-			if front then
-				front.Velocity *= SlideVelocityMultiplier
+		AddConnection(HumanoidRootPart.ChildAdded:Connect(function(obj)
+			for _, velName in velList do
+				if obj.Name == velName then
+					connectVelocity(obj)
+				end
 			end
 		end), _SlideVelocity)
 	end
@@ -1050,7 +1080,7 @@ Player.CharacterAdded:Connect(function(char)
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-	
+
 	SlideVelocity(isEnabled(_SlideVelocity))
 	BlockingAssistant(isEnabled(_BlockingAssistant))
 	AntiTrashDebuff(isEnabled(_AntiTrashDebuff))
@@ -1105,13 +1135,13 @@ local SlideVelocity_Toggle = SlideVelocity_Section:Toggle({
 local SlideVelocity_Slider = SlideVelocity_Section:Slider({
 	Title = "Multiplier",
 	Step = 0.01,
-	
+
 	Value = {
 		Min = 1,
 		Max = 2,
 		Default = 1.05,
 	},
-	
+
 	Callback = function(value)
 		SlideVelocityMultiplier = value
 	end,
