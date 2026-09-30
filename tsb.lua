@@ -1023,13 +1023,25 @@ end
 
 local _SlideVelocity = {}
 
-local SlideVelocityMultiplier = 1
+local SlideVelocityMultiplier = 1.05
 
 function SlideVelocity(enabled)
 	ClearConnections(_SlideVelocity)
 	
 	if enabled then
-		
+		AddConnection(RunService.Heartbeat:Connect(function()
+			local sideback: BodyVelocity = HumanoidRootPart:FindFirstChild("velocity")
+			
+			if sideback then
+				sideback.Velocity *= SlideVelocityMultiplier
+			end
+			
+			local front: BodyVelocity = HumanoidRootPart:FindFirstChild("moveme") 
+			
+			if front then
+				front.Velocity *= SlideVelocityMultiplier
+			end
+		end), _SlideVelocity)
 	end
 end
 
@@ -1086,7 +1098,7 @@ local SlideVelocity_Toggle = SlideVelocity_Section:Toggle({
 	Title = "Dashes Velocity",
 	Flag = "DashesVelocity",
 	Callback = function(state)
-		-- need to add
+		SlideVelocity(state)
 	end,
 })
 
