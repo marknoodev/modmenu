@@ -1135,6 +1135,7 @@ local SlideVelocity_Toggle = SlideVelocity_Section:Toggle({
 local SlideVelocity_Slider = SlideVelocity_Section:Slider({
 	Title = "Multiplier",
 	Step = 0.01,
+	Flag = "SlideMultiplier",
 
 	Value = {
 		Min = 1,
