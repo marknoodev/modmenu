@@ -214,7 +214,7 @@ function AntiDC(enabled)
 		for _, obj in Character:GetChildren() do
 			if obj.Name == "NoRotateUltimate" then
 				local oldPos = HumanoidRootPart.CFrame
-				HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)	
+				HumanoidRootPart.CFrame = CFrame.new(17000, 18000, 19000)	
 
 				task.wait(1.1)
 
