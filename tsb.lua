@@ -216,7 +216,7 @@ function AntiDC(enabled)
 				local oldPos = HumanoidRootPart.CFrame
 				HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)	
 
-				task.wait(.8)
+				task.wait(1.1)
 
 				if Character:FindFirstChild("Freeze") then
 					Character:FindFirstChild("Freeze"):Destroy()
