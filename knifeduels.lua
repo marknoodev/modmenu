@@ -356,3 +356,18 @@ local HoldAimbot_Slider = HoldAimbot_Section:Slider({
 		HoldAimbotRadius = value
 	end,
 })
+
+--// CONFIG \\--
+local Config_Tab = Window:Tab({
+	Title = "Settings",
+	Icon = "settings"
+})
+
+Config_Tab:Keybind({
+	Title = "Show/Hide Menu",
+	Value = "Insert",
+	Flag = "ShowHideMenuKeybind",
+	Callback = function(v)
+		Window:SetToggleKey(Enum.KeyCode[v])
+	end,
+})
