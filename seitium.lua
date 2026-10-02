@@ -15,6 +15,11 @@ local Ids = {
 	[136801880565837] = function()
 		loadstring(game:HttpGet("https://raw.githubusercontent.com/marknoodev/modmenu/refs/heads/main/flick.lua"))()
 	end,
+
+    -- Knife Duels
+    [112731528776884] = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/marknoodev/modmenu/refs/heads/main/knifeduels.lua"))()
+    end,
 }
 
 local _script = Ids[game.PlaceId]
