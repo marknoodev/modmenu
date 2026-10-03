@@ -1176,7 +1176,7 @@ local SlideVelocity_Slider = SlideVelocity_Section:Slider({
 
 	Value = {
 		Min = 1,
-		Max = 2,
+		Max = 10,
 		Default = 1.05,
 	},
 
