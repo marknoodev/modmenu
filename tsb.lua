@@ -106,7 +106,7 @@ function CounterVisualizer(enabled)
 	PreloadImage(137607954274376)
 
 	for _, obj in pairs(workspace.Live:GetChildren()) do
-		if obj.Head:FindFirstChild("CounterV") then
+		if obj:FindFirstChild("Head") and obj.Head:FindFirstChild("CounterV") then
 			obj.Head.CounterV:Destroy()
 		end
 	end
@@ -114,6 +114,9 @@ function CounterVisualizer(enabled)
 	ClearConnections(_CounterVisualizer)
 
 	local function createDCImage(chr)
+		if not chr:FindFirstChild("Head") then return end
+		if chr.Head:FindFirstChild("CounterV") then return end
+
 		local BillboardGui = Instance.new("BillboardGui")
 		local ImageLabel = Instance.new("ImageLabel")
 
@@ -134,42 +137,70 @@ function CounterVisualizer(enabled)
 		ImageLabel.Image = "rbxassetid://137607954274376"
 	end
 
+	local function removeDCImage(chr)
+		if chr:FindFirstChild("Head") and chr.Head:FindFirstChild("CounterV") then
+			chr.Head.CounterV:Destroy()
+		end
+	end
+
+	local function setupCharacter(chr)
+		if not chr or not chr:IsA("Model") then return end
+		if not game.Players:GetPlayerFromCharacter(chr) then return end
+		if chr == Character then return end
+
+		local plr = game.Players:GetPlayerFromCharacter(chr)
+
+		if chr:FindFirstChild("Counter") then
+			createDCImage(chr)
+		end
+
+		AddConnection(plr.CharacterAdded:Connect(function(newChr)
+			AddConnection(newChr.ChildAdded:Connect(function(obj)
+				if obj.Name == "Counter" and obj:IsA("Accessory") then
+					createDCImage(newChr)
+				end
+			end), _CounterVisualizer)
+
+			AddConnection(newChr.ChildRemoved:Connect(function(obj)
+				if obj.Name == "Counter" and obj:IsA("Accessory") then
+					removeDCImage(newChr)
+				end
+			end), _CounterVisualizer)
+
+			if newChr:FindFirstChild("Counter") then
+				createDCImage(newChr)
+			end
+		end), _CounterVisualizer)
+		AddConnection(chr.ChildAdded:Connect(function(obj)
+			if obj.Name == "Counter" and obj:IsA("Accessory") then
+				createDCImage(chr)
+			end
+		end), _CounterVisualizer)
+
+		AddConnection(chr.ChildRemoved:Connect(function(obj)
+			if obj.Name == "Counter" and obj:IsA("Accessory") then
+				removeDCImage(chr)
+			end
+		end), _CounterVisualizer)
+	end
+
 	if enabled then
 		for _, chr in pairs(workspace.Live:GetChildren()) do
-			if game.Players:GetPlayerFromCharacter(chr) and chr ~= Character then
-				local plr = game.Players:GetPlayerFromCharacter(chr)
-
-				if chr:FindFirstChild("Counter") then
-					createDCImage(chr)
-				end
-
-				AddConnection(plr.CharacterAdded:Connect(function(chr)
-					AddConnection(chr.ChildAdded:Connect(function(obj)
-						if obj.Name == "Counter" and obj:IsA("Accessory") then
-							createDCImage(chr)
-						end
-					end), _CounterVisualizer)
-
-					AddConnection(chr.ChildRemoved:Connect(function(obj)
-						if obj.Name == "Counter" and obj:IsA("Accessory") then
-							chr.Head:FindFirstChild("CounterV"):Destroy()
-						end
-					end), _CounterVisualizer)
-				end), _CounterVisualizer)
-
-				AddConnection(chr.ChildAdded:Connect(function(obj)
-					if obj.Name == "Counter" and obj:IsA("Accessory") then
-						createDCImage(chr)
-					end
-				end), _CounterVisualizer)
-
-				AddConnection(chr.ChildRemoved:Connect(function(obj)
-					if obj.Name == "Counter" and obj:IsA("Accessory") then
-						chr.Head:FindFirstChild("CounterV"):Destroy()
-					end
-				end), _CounterVisualizer)
-			end
+			setupCharacter(chr)
 		end
+
+		AddConnection(workspace.Live.ChildAdded:Connect(function(chr)
+			setupCharacter(chr)
+		end), _CounterVisualizer)
+
+		AddConnection(game.Players.PlayerAdded:Connect(function(plr)
+			plr.CharacterAdded:Connect(function(chr)
+				if chr.Parent ~= workspace.Live then
+					chr.AncestryChanged:Wait()
+				end
+				setupCharacter(chr)
+			end)
+		end), _CounterVisualizer)
 	end
 end
 
@@ -207,46 +238,52 @@ end
 
 local _AntiDC = {}
 
+local function onDeathCountered()
+	local part = Instance.new("Part")
+	part.Size = Vector3.new(2048, 1, 2048)
+	part.CFrame = CFrame.new(20000, -500, 20000)
+	part.Anchored = true
+	part.Transparency = 1	
+
+	part.Parent = workspace
+
+	local oldCFrame = HumanoidRootPart.CFrame
+
+	task.wait(.05)
+
+	HumanoidRootPart.CFrame = CFrame.new(20000, -496, 20000)
+
+	task.wait(1.2)
+
+	HumanoidRootPart.CFrame = oldCFrame
+
+	if Character:FindFirstChild("Freeze") then
+		Character:FindFirstChild("Freeze"):Destroy()
+	end
+
+	if Character:FindFirstChild("NoRotate") then
+		Character:FindFirstChild("NoRotate"):Destroy()
+	end
+
+	task.wait(1)
+
+	part:Destroy()
+end
+
 function AntiDC(enabled)
 	ClearConnections(_AntiDC)
 
 	if enabled then
 		for _, obj in Character:GetChildren() do
 			if obj.Name == "NoRotateUltimate" then
-				local oldPos = HumanoidRootPart.CFrame
-				HumanoidRootPart.CFrame = CFrame.new(17000, 18000, 19000)	
-
-				task.wait(1.1)
-
-				if Character:FindFirstChild("Freeze") then
-					Character:FindFirstChild("Freeze"):Destroy()
-				end
-
-				if Character:FindFirstChild("NoRotate") then
-					Character:FindFirstChild("NoRotate"):Destroy()
-				end
-
-				HumanoidRootPart.CFrame = oldPos
+				onDeathCountered()
 				break
 			end
 		end
 
 		AddConnection(Character.ChildAdded:Connect(function(obj)
 			if obj.Name == "NoRotateUltimate" then
-				local oldPos = HumanoidRootPart.CFrame
-				HumanoidRootPart.CFrame = CFrame.new(9999, 9999, 9999)	
-
-				task.wait(.8)
-
-				if Character:FindFirstChild("Freeze") then
-					Character:FindFirstChild("Freeze"):Destroy()
-				end
-
-				if Character:FindFirstChild("NoRotate") then
-					Character:FindFirstChild("NoRotate"):Destroy()
-				end
-
-				HumanoidRootPart.CFrame = oldPos
+				onDeathCountered()
 			end
 		end), _AntiDC)
 	end
@@ -1027,24 +1064,24 @@ local SlideVelocityMultiplier = 1.05
 
 local function connectVelocity(instance: BodyVelocity)
 	local tempConns = {}
-	
+
 	local changingVelocity = false
-	
+
 	AddConnection(instance:GetPropertyChangedSignal("Velocity"):Connect(function()
 		if changingVelocity then
 			return
 		end
-		
+
 		local vel = instance.Velocity
-		
+
 		if vel.Magnitude <= 0 then
 			return
 		end
-		
+
 		changingVelocity = true
-		
+
 		instance.Velocity = vel * SlideVelocityMultiplier
-		
+
 		changingVelocity = false
 	end), tempConns)
 
