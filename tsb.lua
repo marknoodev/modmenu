@@ -765,10 +765,6 @@ local FreecamConnections = {}
 
 local INPUT_BLOCK_NAME = "Freecam_BlockInputs"
 
---------------------------------------------------
--- BLOQUEAR INPUTS DO PERSONAGEM
---------------------------------------------------
-
 local function BlockPlayerInput()
 	return Enum.ContextActionResult.Sink
 end
@@ -803,10 +799,6 @@ end
 local function UnblockAllInputs()
 	ContextActionService:UnbindAction(INPUT_BLOCK_NAME)
 end
-
---------------------------------------------------
--- START
---------------------------------------------------
 
 local function StartFreecam()
 	if FreecamActive then
@@ -863,11 +855,7 @@ local function StartFreecam()
 	UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 
 	BlockAllInputs()
-
-	--------------------------------------------------
-	-- MOUSE
-	--------------------------------------------------
-
+	
 	AddConnection(
 		UserInputService.InputChanged:Connect(function(input)
 
@@ -898,10 +886,6 @@ local function StartFreecam()
 		end),
 		FreecamConnections
 	)
-
-	--------------------------------------------------
-	-- MOVIMENTO DA CÂMERA
-	--------------------------------------------------
 
 	AddConnection(
 		RunService.RenderStepped:Connect(function(deltaTime)
@@ -972,10 +956,6 @@ local function StartFreecam()
 	)
 end
 
---------------------------------------------------
--- STOP
---------------------------------------------------
-
 local function StopFreecam()
 	if not FreecamActive then
 		return
@@ -1013,13 +993,7 @@ local function StopFreecam()
 		or true
 end
 
---------------------------------------------------
--- TOGGLE DA FREECAM
---------------------------------------------------
-
 function Freecam()
-
-	-- Toggle principal está desligado
 	if not _Freecam then
 		return
 	end
@@ -1112,12 +1086,83 @@ function SlideVelocity(enabled)
 	end
 end
 
+local SKILL_NAME = "Crushing Pull"
+local LASTSKILL_UPDATE_TIME = .3 -- the time script needs to wait to detect if lastskill has changed it's value
+local DELAY_TO_VOID = .1
+local DELAY_TO_BACK = 1
+local VOID_CFRAME     = CFrame.new(139, -16, 43)
+
+local lastHRPCFrame = nil
+local usingVoidKill = false -- debounce
+
+local _VoidSkill = {}
+function VoidSkill(enabled)
+	ClearConnections(_VoidSkill)
+	
+	lastHRPCFrame = nil
+	usingVoidKill = false
+	
+	if enabled then
+		AddConnection(Character.ChildAdded:Connect(function(obj)
+			if obj.Name ~= SKILL_NAME then
+				return
+			end
+			
+			if usingVoidKill then
+				return
+			end
+			usingVoidKill = true
+			
+			if not Character:GetAttribute("LastSkill") then
+				Character:SetAttribute("LastSkill", tick())
+			end
+			
+			local lastSkillBeforeValue = Character:GetAttribute("LastSkill")
+			
+			local lastLastSkillChanged = false
+			
+			local tempConn = {}
+			AddConnection(Character:GetAttributeChangedSignal("LastSkill"):Connect(function()
+				lastLastSkillChanged = true
+			end), tempConn)
+			
+			local startTime = os.clock()
+			while os.clock() - startTime < LASTSKILL_UPDATE_TIME do
+				if lastLastSkillChanged then break end
+				task.wait()
+			end
+			
+			if next(tempConn) then
+				ClearConnections(tempConn)
+			end
+			
+			local lastSkillAfterValue = Character:GetAttribute("LastSkill")
+			
+			if not lastLastSkillChanged and lastSkillAfterValue == lastSkillBeforeValue then
+				usingVoidKill = false
+				return
+			end
+			
+			lastHRPCFrame = HumanoidRootPart.CFrame
+			
+			task.wait(DELAY_TO_VOID)
+			HumanoidRootPart.CFrame = VOID_CFRAME
+			
+			task.wait(DELAY_TO_BACK)
+			HumanoidRootPart.CFrame = lastHRPCFrame or CFrame.new(150, 441, 33)
+			
+			usingVoidKill = false
+		end), _VoidSkill)
+	end
+end
+
 Player.CharacterAdded:Connect(function(char)
 	Character = char
 	HumanoidRootPart = char:WaitForChild("HumanoidRootPart")
 	Humanoid = char:WaitForChild("Humanoid")	
 	Animator = Humanoid:WaitForChild("Animator")
-
+	
+	VoidSkill(isEnabled(_VoidSkill))
 	SlideVelocity(isEnabled(_SlideVelocity))
 	BlockingAssistant(isEnabled(_BlockingAssistant))
 	AntiTrashDebuff(isEnabled(_AntiTrashDebuff))
@@ -1352,6 +1397,14 @@ local BlockingAssistant_Toggle = Combat_Tab:Toggle({
 	Flag = "BlockingAssistant",
 	Callback = function(state)
 		BlockingAssistant(state)
+	end,
+})
+
+local VoidSkill_Toggle = Combat_Tab:Toggle({
+	Title = "Void Skill",
+	Flag = "VoidSkill",
+	Callback = function(state)
+		VoidSkill(state)
 	end,
 })
 
