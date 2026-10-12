@@ -1090,7 +1090,7 @@ local SKILL_NAME = "Crushing Pull"
 local LASTSKILL_UPDATE_TIME = .3 -- the time script needs to wait to detect if lastskill has changed it's value
 local DELAY_TO_VOID = .1
 local DELAY_TO_BACK = 1
-local VOID_CFRAME     = CFrame.new(139, -16, 43)
+local VOID_CFRAME = CFrame.new(20000, 50000, 20000)
 
 local lastHRPCFrame = nil
 local usingVoidKill = false -- debounce
